@@ -1,0 +1,4 @@
+/Users/dylanbeaumont/Desktop/DSTerminal/cmake-build-debug/CMakeFiles/GLAD.dir
+/Users/dylanbeaumont/Desktop/DSTerminal/cmake-build-debug/CMakeFiles/DSTerminal.dir
+/Users/dylanbeaumont/Desktop/DSTerminal/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/dylanbeaumont/Desktop/DSTerminal/cmake-build-debug/CMakeFiles/rebuild_cache.dir

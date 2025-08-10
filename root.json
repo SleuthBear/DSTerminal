@@ -1,0 +1,34 @@
+{
+  "name": "~/",
+  "type": 0,
+  "children": [
+    {
+      "name": "Documents",
+      "type": 0,
+      "children": [
+        {
+          "name": "ExampleFile.txt",
+          "type": 1
+        },
+        {
+          "name": "ExampleFile2.txt",
+          "type": 1
+        }
+      ]
+    },
+    {
+      "name": "Applications",
+      "type": 0,
+      "children": [
+        {
+          "name": "SnakeGame.exe",
+          "type": 1
+        },
+        {
+          "name": "Random.exe",
+          "type": 1
+        }
+      ]
+    }
+  ]
+}
