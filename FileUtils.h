@@ -1,25 +1,38 @@
 //
 // Created by Dylan Beaumont on 9/8/2025.
 //
+#pragma once
 
+#include <codecvt>
 #include <string>
 
 #include "json.h"
-#include "Terminal.h"
+
 using json = nlohmann::json;
+
+struct FileNode {
+    std::string name;
+    int type;
+    FileNode *parent;
+    FileNode **children;
+    int nChildren;
+};
 
 FileNode* getNode(json data);
 FileNode* readSystem(const std::string& filePath);
+FileNode *findChild(FileNode* pos, std::string_view name);
+std::string_view trimString(std::string_view str);
+FileNode *followPath(FileNode *pos, std::string_view path);
+FileNode *findChild(FileNode* pos, const std::string_view name);
 
-
-FileNode* readSystem(const std::string& filePath) {
+inline FileNode* readSystem(const std::string& filePath) {
     FileNode root = {};
     std::ifstream f(filePath);
     json data = json::parse(f);
     return getNode(data);
 }
 
-FileNode* getNode(json data) {
+inline FileNode* getNode(json data) {
     if (data["name"].empty()) return nullptr;
     FileNode* newNode = new FileNode{data["name"], data["type"], nullptr, nullptr, 0};
     // DO NOT stack allocate this recursively (for obvious reasons)
@@ -45,4 +58,55 @@ FileNode* getNode(json data) {
     newNode->children = children;
     newNode->nChildren = count;
     return newNode;
+}
+
+// I hate this function, it is so ugly. But it mostly works...
+inline FileNode *followPath(FileNode *pos, std::string_view path) {
+    int i = 0;
+    int start = 0;
+    path = trimString(path);
+    while (i < path.length()) {
+        if (path[i] == '/' || path[i] == '\\') {
+            if (i != start) {
+                pos = findChild(pos, path.substr(start, i-start));
+                // skip around the slash
+                start = i+1;
+                if (pos == nullptr) {
+                    return nullptr;
+                }
+            }
+        }
+        i++;
+    }
+    if (i != start) {
+        pos = findChild(pos, path.substr(start, i-start));
+        if (pos == nullptr) {
+            return nullptr;
+        }
+    }
+    return pos;
+}
+
+inline FileNode *findChild(FileNode* pos, const std::string_view name) {
+    if (name == "..") {
+        return pos->parent;
+    }
+    for(int i = 0; i < pos->nChildren; i++) {
+        FileNode *child = pos->children[i];
+        if (child->name == name) {
+            return child;
+        }
+    }
+    return nullptr;
+}
+
+inline std::string_view trimString(std::string_view str) {
+    int start = -1;
+    for (int i = 0; i < str.length(); i++) {
+        if (start == -1 && str[i] != ' ') start = i;
+        else if (start != -1 && str[i] == ' ') {
+            return str.substr(start, i-start);
+        }
+    }
+    return str.substr(std::max(0,start), str.length()-start);
 }

@@ -26,6 +26,8 @@ add_executable(DSTerminal main.cpp
         KeyState.h
         include/json.h
         FileUtils.h
+        CylinderLock.cpp
+        CylinderLock.h
 )
 
 target_link_libraries(DSTerminal PRIVATE

@@ -3,25 +3,16 @@
 //
 
 #include "Terminal.h"
-
 #include <freetype/freetype.h>
 
-#include <utility>
 
+// todo take the vertex binding stuff out and put in the render call
 Terminal::Terminal(FileNode root, FileNode node) {
-    this->root = std::move(root);
-    this->node = std::move(node);
+    this->root = &root;
+    this->node = &node;
     // initialize vao and vbo
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    // initialize buffer
     lines[0].text = "123141";
     lines[1].text = "this is another line";
     lines[2].text = "oh look another line";
@@ -108,9 +99,14 @@ Terminal::Terminal(FileNode root, FileNode node) {
 void Terminal::renderText(Shader &shader, std::string text, float xInitial, float y, float width, float lineHeight, float scale, glm::vec3 color) {
     // activate corresponding render state
     shader.use();
+    // todo get VBO bind done in initialization
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
     glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color.x, color.y, color.z);
     glActiveTexture(GL_TEXTURE0);
-    glBindVertexArray(VAO);
 
     // iterate through all characters
     float x = xInitial;
@@ -147,9 +143,8 @@ void Terminal::renderText(Shader &shader, std::string text, float xInitial, floa
         // update content of VBO memory
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // be sure to use glBufferSubData and not glBufferData
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         // render quad
+        // todo make this less shit (why not render all at once?)
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
@@ -159,9 +154,9 @@ void Terminal::renderText(Shader &shader, std::string text, float xInitial, floa
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-int Terminal::getLineWraps(std::string text, float x, float width, float scale) {
+int Terminal::getLineWraps(std::string_view text, float x, float width, float scale) {
     int wraps = 1;
-    std::string::const_iterator c;
+    std::string_view::const_iterator c;
     for (c = text.begin(); c != text.end(); c++)
     {
         Character ch = characters[*c];
@@ -178,15 +173,16 @@ int Terminal::getLineWraps(std::string text, float x, float width, float scale) 
 }
 
 // Render the terminal with top-left corner pos.
+// todo use string views
 void Terminal::renderBuffer(Shader shader, glm::vec2 pos, float width, float height) {
+    shader.use();
     if (window == -1) return;
-    // todo figure out scrolling to not show current line. Brilliant idea: just make the input the end of the buffer! problem solved.
     // Subtract line spacing from height to space the bottom line.
     int nLines = ceil((height - LINE_SPACING) / lineHeight) + 1;
     float charHeight = lineHeight - LINE_SPACING;
     float charScale = charHeight / lHeight;
     // We render nLines - 1. Because the last line is the one currently being typed.
-    int printedLines = 0; // getLineWraps("> " + input, pos.x, width, charScale);
+    int printedLines = 0;
     // renderText(shader, "> " + input, pos.x, pos.y + (float)(printedLines-1)*lineHeight, width, lineHeight, charScale, GREEN);
     for (int i = 0; printedLines < (nLines); i++) {
         // Upon reaching the start of the buffer, simply wrap around.
@@ -232,10 +228,15 @@ void Terminal::addLine(const Line& line) {
 }
 
 // Todo figure out how to do regex. (roll your own regex? that's gonna suck)
+// Maybe just delimit args by spaces? :)
 void Terminal::readCommand() {
-    std::string text = lines[start].text;
+    std::string_view text = lines[start].text;
     if (text.substr(0, 2) == "ls") {
-        ls();
+        if (text.length() < 3) {
+            ls("");
+        } else {
+            ls(text.substr(3, text.length()-3));
+        }
         return;
     }
     if (text.substr(0,2) == "cd") {
@@ -243,41 +244,31 @@ void Terminal::readCommand() {
             addLine({"Invalid file target", RED, DS_SYS});
             return;
         }
-        int i = 2;
-        while (text[i++] == ' ') {
-            if (i >= text.length()) {
-                addLine({"Invalid file target", RED, DS_SYS});
-                return;
-            }
-        }
-        int startIndex = i-1;
-        while (text[i] != ' ' && i++ < text.length()) {}
-        cd(lines[start].text.substr(startIndex, i-startIndex));
+        cd(text.substr(3, text.length()-3));
     }
 }
 
-void Terminal::ls() {
-    std::string response = "";
-    for (int i=0; i < node.nChildren; i++) {
-        response += node.children[i]->name + "  ";
+void Terminal::ls(std::string_view path) {
+    std::string response;
+    // Recurse through the path and try exit out if you fail to get to the end
+    FileNode *pos = node;
+    pos = followPath(pos, path);
+    if (pos == nullptr) {
+        addLine({"Invalid path.", RED, DS_SYS});
+        return;
+    }
+    for (int i=0; i < pos->nChildren; i++) {
+        response += pos->children[i]->name + "  ";
     }
     addLine({response, BLUE, DS_SYS});
 }
 
-// TODO get this working with a full path
-// keep reading until a /, then process the current step. stop on a space.
-// If at any point you can't keep stepping forward, then go back to a saved
-// node and send an error msg.
-void Terminal::cd(std::string fileName) {
-    if (fileName == "../") {
-        node = *node.parent;
+void Terminal::cd(const std::string_view path) {
+    FileNode *pos = node;
+    pos = followPath(pos, path);
+    if (pos == nullptr) {
+        addLine({"Invalid path.", RED, DS_SYS});
         return;
     }
-    for (int i=0; i < node.nChildren; i++) {
-        if (node.children[i]->name == fileName) {
-            node = *node.children[i];
-            return;
-        }
-    }
-    addLine({"\"" + fileName + "\" doesn't exist", RED, DS_SYS});
+    node = pos;
 }

@@ -11,6 +11,7 @@
 #include "Shader.h"
 #include <glfw3.h>
 #include <map>
+#include "FileUtils.h"
 
 /* The terminal class will contain all of the text held by the buffer. This will be cycled
  * in a 2000 character ring buffer */
@@ -26,13 +27,8 @@ struct Character {
  unsigned int Advance;   // Horizontal offset to advance to next glyph
 };
 
-struct FileNode {
-    std::string name;
-    int type;
-    FileNode *parent;
-    FileNode **children;
-    int nChildren;
-};
+
+
 
 struct Line {
     std::string text;
@@ -44,8 +40,8 @@ struct Line {
 class Terminal {
 public:
   // col and row pos
-  FileNode node;
-  FileNode root;
+  FileNode *node;
+  FileNode *root;
   int cursor = 0;
   float lineHeight = 20;
   double viewHeight = 0;
@@ -61,11 +57,11 @@ public:
   Terminal(FileNode root, FileNode node);
   void renderBuffer(Shader shader, glm::vec2 pos, float width, float height);
   void renderText(Shader &shader, std::string text, float x, float y, float width, float lineHeight, float scale, glm::vec3 color);
-  int getLineWraps(std::string text, float x, float width, float scale);
+  int getLineWraps(std::string_view text, float x, float width, float scale);
   void addLine(const Line& line);
   void readCommand();
-  void ls();
-  void cd(std::string);
+  void ls(const std::string_view path);
+  void cd(const std::string_view path);
 };
 
 #endif //TERMINAL_H

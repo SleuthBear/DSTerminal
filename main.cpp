@@ -1,18 +1,18 @@
 #include <iostream>
 #include <string>
 #include <glad/glad.h>
-#include <glfw/glfw3.h>
+// #include <glfw/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <ft2build.h>
 
+#include "CylinderLock.h"
 #include "KeyState.h"
 
 #include FT_FREETYPE_H
 #include "Shader.h"
 #include "Terminal.h"
-#include "FileUtils.h"
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -69,15 +69,11 @@ int main()
     // compile and setup the shader
     // ----------------------------
     Shader shader("../shaders/text.vert", "../shaders/text.frag");
+    Shader lockShader("../shaders/lock.vert", "../shaders/lock.frag");
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
-    shader.use();
+    // shader.use();
+    lockShader.use();
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-    // TODO figure out how to get this to load from a JSON file.
-    // FileNode root = {"root", DS_DIR, nullptr, nullptr, 3};
-    // FileNode testFile = {"testFile.txt", DS_FILE, &root, nullptr, 0};
-    // FileNode *rootChildren[3] = {&testFile, &testFile, &testFile};
-    // root.children = rootChildren;
 
     FileNode *root = readSystem("../root.json");
     Terminal terminal = Terminal(*root, *root);
@@ -90,6 +86,7 @@ int main()
     bool enterPressed = false;
     double deltaTime = 0.0f;
     double windowTime = -0.1667f;
+    CylinderLock lock = CylinderLock(5, 1.0, SCR_WIDTH/2, SCR_HEIGHT/2, 100);
     while (!glfwWindowShouldClose(window))
     {
         double curTime = glfwGetTime();
@@ -98,12 +95,19 @@ int main()
         // input
         // -----
         processInput(window, &terminal, &keyState, deltaTime);
+        lock.processInput(window, &keyState, deltaTime);
         // render
         // ------
+        glm::vec3 color = {0, 1, 0};
         projection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(lockShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        // glUniformMatrix3fv(glGetUniformLocation(lockShader.ID, "color"), 1, GL_FALSE, glm::value_ptr(color));
+
         glClearColor(0.0f, 0.05f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        lock.rotateLock(deltaTime);
+        lock.render(lockShader);
         terminal.renderBuffer(shader, {5.0f, 5.0f}, (float)SCR_WIDTH-15.0f, (float)SCR_HEIGHT-15.0f);
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -162,6 +166,7 @@ void processInput(GLFWwindow *window, Terminal *terminal, KeyState *keyState, do
         }
     }
 }
+
 
 
 

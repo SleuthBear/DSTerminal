@@ -7,18 +7,20 @@
 
 #define DS_DIR 0
 #define DS_FILE 1
-typedef struct {
+struct KeyState{
     double left = 10;
     double right = 10;
     double backspace = 10;
     double enter = 10;
+    double space = 10;
     double interval = 0.1f;
     void addDeltaTime(double deltaTime) {
         left+=deltaTime;
         right+=deltaTime;
         backspace+=deltaTime;
         enter+=deltaTime;
+        space+=deltaTime;
     }
-} KeyState;
+};
 
 #endif
