@@ -5,23 +5,34 @@
 #include "Terminal.h"
 #include <freetype/freetype.h>
 
+#include "CylinderLock.h"
+
+
+void scrollCallback(GLFWwindow *window, double xOffset, double yOffset);
+void charCallback(GLFWwindow *window, unsigned int codepoint);
+Shader* Terminal::shader = nullptr;  // Definition
 
 // todo take the vertex binding stuff out and put in the render call
-Terminal::Terminal(FileNode root, FileNode node) {
+Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> pushToStack, int *width, int *height) {
+    this->width = width;
+    this->height = height;
     this->root = &root;
     this->node = &node;
+    // What do you mean this isn't readable??
+    this->pushToStack = pushToStack;
     // initialize vao and vbo
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    lines[0].text = "123141";
-    lines[1].text = "this is another line";
-    lines[2].text = "oh look another line";
-    lines[3].text = "";
-    lines[3].colour = GREEN;
-    lines[3].side = DS_USER;
+    lines[0].text = "";
+    lines[1].text = "";
+    lines[1].colour = GREEN;
+    lines[1].side = DS_USER;
     end = 0;
-    start = 3;
-    window = 3;
+    start = 1;
+    window = 1;
+    for (int i = 0; i < MAX_COMMAND_LOOKBACK; i++) {
+        commands[i] = {"", GREEN, DS_USER};
+    }
     FT_Library ft;
     // All functions return a value different than 0 whenever an error occurred
     if (FT_Init_FreeType(&ft))
@@ -94,6 +105,19 @@ Terminal::Terminal(FileNode root, FileNode node) {
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
     input = "";
+}
+
+int Terminal::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
+    // todo fix magic numbers
+    if (!active) {
+        glfwSetWindowUserPointer(window, this);
+        glfwSetCharCallback(window, charCallback);
+        glfwSetScrollCallback(window, reinterpret_cast<GLFWscrollfun>(scrollCallback));
+        active = true;
+    }
+    processInput(window, keyState, deltaTime);
+    renderBuffer(*shader, {5.0f, 5.0f}, (float)800-15.0f, (float)800-15.0f);
+    return 0;
 }
 
 void Terminal::renderText(Shader &shader, std::string text, float xInitial, float y, float width, float lineHeight, float scale, glm::vec3 color) {
@@ -191,7 +215,12 @@ void Terminal::renderBuffer(Shader shader, glm::vec2 pos, float width, float hei
         }
 
         Line line = lines[window - i];
-        std::string toDisplay = "> " + line.text;
+        std::string toDisplay;
+        if (line.side == DS_USER) {
+            toDisplay = "> " + line.text;
+        } else {
+            toDisplay = line.text;
+        }
         if (window-i == start) {
             if (toDisplay.length() < cursor+2) {
                 toDisplay += "|";
@@ -199,7 +228,7 @@ void Terminal::renderBuffer(Shader shader, glm::vec2 pos, float width, float hei
                 toDisplay.replace(cursor+2, 1, "|");
             }
         }
-        printedLines += getLineWraps("> " + line.text, 0, width, charScale); //renderTextWithWrap(shader, "> " + input, pos.x, pos.y, width, lineHeight, charScale, GREEN);
+        printedLines += getLineWraps(toDisplay, 0, width, charScale); //renderTextWithWrap(shader, "> " + input, pos.x, pos.y, width, lineHeight, charScale, GREEN);
         // One line spacing to pad the input line
         float lineY =  LINE_SPACING + (lineHeight) * (float)(printedLines-1);
 
@@ -227,9 +256,22 @@ void Terminal::addLine(const Line& line) {
     window = start;
 }
 
+void Terminal::stepBack() {
+    node = node->parent;
+}
+
 // Todo figure out how to do regex. (roll your own regex? that's gonna suck)
 // Maybe just delimit args by spaces? :)
 void Terminal::readCommand() {
+   // Handle the lookback buffer
+    if (atCommand == MAX_COMMAND_LOOKBACK-1) {
+        atCommand = 0;
+    } else {
+        atCommand++;
+    }
+    commands[atCommand] = {std::string(lines[start].text), GREEN, DS_USER};
+    viewingCommand = atCommand;
+
     std::string_view text = lines[start].text;
     if (text.substr(0, 2) == "ls") {
         if (text.length() < 3) {
@@ -257,6 +299,10 @@ void Terminal::ls(std::string_view path) {
         addLine({"Invalid path.", RED, DS_SYS});
         return;
     }
+    if (node->name != pos->name && pos->name.find(".lock") != -1) {
+        addLine({"Must unlock " + pos->name, RED, DS_SYS});
+        return;
+    }
     for (int i=0; i < pos->nChildren; i++) {
         response += pos->children[i]->name + "  ";
     }
@@ -270,5 +316,144 @@ void Terminal::cd(const std::string_view path) {
         addLine({"Invalid path.", RED, DS_SYS});
         return;
     }
+    if (pos->name.find(".lock") != -1) {
+        node = pos;
+        CylinderLock *lock = new CylinderLock{10, 2, 400, 400, 100, this};
+        pushToStack({
+            [lock](GLFWwindow* _window, KeyState *_keyState, double _deltaTime){return lock->update(_window, _keyState, _deltaTime);},
+                [lock]() {delete lock;}
+        });
+        active = false;
+    }
     node = pos;
 }
+
+void Terminal::processInput(GLFWwindow *window, KeyState* keyState, double deltaTime) {
+    keyState->addDeltaTime(deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS) {
+        if (keyState->backspace > keyState->interval) {
+            unsigned int start = this->start;
+            std::string *input = &lines[start].text;
+            if (!input->empty()) {
+                input->erase(cursor-1, 1);
+                cursor--;
+            }
+            keyState->backspace = 0;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
+        if (keyState->enter > keyState->interval) {
+            if (!lines[this->start].text.empty()) {
+                readCommand();
+                addLine({"", GREEN, DS_USER});
+                viewHeight = 0;
+                cursor = 0;
+            }
+            keyState->enter = 0;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
+        if (keyState->tab > keyState->interval) {
+            autoComplete();
+            keyState->tab = 0;
+        }
+
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && cursor > 0) {
+        if (keyState->left > keyState->interval) {
+            cursor--;
+            keyState->left = 0;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && cursor < lines[this->start].text.length()) {
+        if (keyState->right > keyState->interval) {
+            cursor++;
+            keyState->right = 0;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        if (keyState->up > keyState->interval) {
+            lines[start] = commands[viewingCommand];
+            cursor = lines[start].text.length();
+            if (viewingCommand == 0) {
+                viewingCommand = MAX_COMMAND_LOOKBACK-1;
+            } else {
+                viewingCommand -= 1;
+            }
+            keyState->up = 0;
+        }
+    }
+}
+
+void charCallback(GLFWwindow *window, unsigned int codepoint) {
+    Terminal *terminal = static_cast<Terminal*>(glfwGetWindowUserPointer(window));
+    int start = static_cast<int>(terminal->start);
+    int cursor = terminal->cursor;
+    terminal->lines[start].text.insert(cursor, 1, static_cast<char>(codepoint));
+    terminal->viewHeight = 0;
+    terminal->window = terminal->start;
+    terminal->cursor++;
+}
+
+void scrollCallback(GLFWwindow *window, double xOffset, double yOffset) {
+    Terminal *terminal = static_cast<Terminal*>(glfwGetWindowUserPointer(window));
+    float lineHeight = terminal->lineHeight;
+    double yPos = terminal->viewHeight;
+    int end = terminal->end;
+    int start = terminal->start;
+
+    // If there aren't enough lines to scroll at all, just return
+    if(start > end && (start - end) < (double)*terminal->height/lineHeight) {
+        return;
+    }
+    yPos += yOffset;
+    yPos = std::max(0.0, yPos);
+    int availableLines = MAX_LINES;
+    if (start > end) {
+        availableLines = start-end;
+    }
+    // Must always have a full screen of lines available
+    yPos = std::min((double)availableLines*lineHeight - (double)*terminal->height, yPos);
+    terminal->window = static_cast<unsigned int>(static_cast<double>(start) - yPos/lineHeight);
+    terminal->viewHeight = yPos;
+
+}
+
+void Terminal::autoComplete() {
+    int i = cursor;
+    while (i >= 0 && lines[start].text[i] != ' ' ) i--;
+    std::string toComplete = lines[start].text.substr(i+1, cursor-i);
+    i = toComplete.length();
+    while (i >= 0 && toComplete[i] != '/') i--;
+    FileNode *pos = followPath(node, toComplete.substr(0, i+1));
+    if (pos == nullptr) {
+        return;
+    }
+    std::string_view toSearch = toComplete.substr(i+1, toComplete.length()-i);
+    std::vector<FileNode*> children;
+    for (int j = 0; j < pos->nChildren; j++) {
+        if (pos->children[j]->name.starts_with(toSearch)) {
+            children.push_back(pos->children[j]);
+        }
+    }
+    if (children.empty()) return;
+    std::string completion;
+    bool found = false;
+    if (children.size() > 1) {
+        for (i = toSearch.length(); i < children[0]->name.length(); i++) {
+            for (FileNode *child : children) {
+                if (child->name[i] != children[0]->name[i]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) break;
+            completion += children[0]->name[i];
+        }
+    } else {
+        completion = children[0]->name.substr(toSearch.length());
+    }
+    lines[start].text.insert(cursor, completion);
+    cursor += completion.length();
+}
+

@@ -74,6 +74,10 @@ inline FileNode *followPath(FileNode *pos, std::string_view path) {
                 if (pos == nullptr) {
                     return nullptr;
                 }
+                if (pos->name.find(".lock") != -1) {
+                    // We have encountered a lock.
+                    return pos;
+                }
             }
         }
         i++;

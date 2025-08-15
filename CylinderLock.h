@@ -9,9 +9,11 @@
 #include <vector>
 
 #include "KeyState.h"
+#include "Terminal.h"
 
 #define MAX_SEGMENTS 64
-
+#define UNLOCKED 2
+#define LOCK_FAILED 3
 struct vertex {
     float x, y, z;
 };
@@ -29,11 +31,16 @@ public:
     float posX, posY, radius, angle;
     unsigned int VAO, VBO;
     std::vector<vertex> vertices;
-    CylinderLock(int segments, double rotSpeed, float posX, float posY, float radius);
+    static Shader *shader;
+    // reference to the terminal it is blocking. Not sure if this is a good idea
+    Terminal *terminal;
+    bool active = false;
+    CylinderLock(int segments, double rotSpeed, float posX, float posY, float radius, Terminal *terminal);
+    int update(GLFWwindow* window, KeyState *keyState, double deltaTime);
     void rotateLock(double deltaTime);
     void updateVertices();
-    void render(Shader &shader);
-    void processInput(GLFWwindow *window, KeyState *keyState, double deltaTime);
+    void render();
+    int processInput(GLFWwindow *window, KeyState *keyState, double deltaTime);
 };
 
 

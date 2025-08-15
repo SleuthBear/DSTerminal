@@ -28,6 +28,7 @@ add_executable(DSTerminal main.cpp
         FileUtils.h
         CylinderLock.cpp
         CylinderLock.h
+        GameLayer.h
 )
 
 target_link_libraries(DSTerminal PRIVATE

@@ -1,34 +1,36 @@
 {
-  "name": "~/",
-  "type": 0,
-  "children": [
-    {
-      "name": "Documents",
-      "type": 0,
-      "children": [
+    "name": "root",
+    "type": 0,
+    "children": [
         {
-          "name": "ExampleFile.txt",
-          "type": 1
+            "name": "testDir1",
+            "type": 0,
+            "children": [
+                {
+                    "name": "text.txt",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "text_2218509980.txt"
+                }
+            ]
         },
         {
-          "name": "ExampleFile2.txt",
-          "type": 1
+            "name": "testDir2",
+            "type": 0,
+            "children": [
+                {
+                    "name": "cyclinder5.lock",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "cyclinder5_1764793389.lock"
+                },
+                {
+                    "name": "app.exe",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "app_1465201045.exe"
+                }
+            ]
         }
-      ]
-    },
-    {
-      "name": "Applications",
-      "type": 0,
-      "children": [
-        {
-          "name": "SnakeGame.exe",
-          "type": 1
-        },
-        {
-          "name": "Random.exe",
-          "type": 1
-        }
-      ]
-    }
-  ]
+    ]
 }
