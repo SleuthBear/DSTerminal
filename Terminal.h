@@ -47,6 +47,7 @@ class Terminal {
 public:
   static Shader *shader;
   GLuint atlasTex;
+  std::map<char, glm::vec4> uvMap;
   int* width;
   int* height;
   FileNode *node;

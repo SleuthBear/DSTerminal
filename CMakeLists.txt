@@ -29,6 +29,9 @@ add_executable(DSTerminal main.cpp
         CylinderLock.cpp
         CylinderLock.h
         GameLayer.h
+        include/STB_IMAGE/stb_image.cpp
+        include/STB_IMAGE/stb_image.h
+        include/STB_IMAGE/stb_image_write.cpp
 )
 
 target_link_libraries(DSTerminal PRIVATE

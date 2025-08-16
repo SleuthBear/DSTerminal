@@ -4,9 +4,11 @@
 
 #include "Terminal.h"
 #include <freetype/freetype.h>
+#include <STB_IMAGE/stb_image_write.h>
 
 #include "CylinderLock.h"
-
+#include "../include/STB_IMAGE/stb_image.h"
+#include "STB_IMAGE/stb_image.h"
 
 void scrollCallback(GLFWwindow *window, double xOffset, double yOffset);
 void charCallback(GLFWwindow *window, unsigned int codepoint);
@@ -113,29 +115,35 @@ Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> 
     // just a very long texture
     unsigned char *atlas = new unsigned char[characters.size()*maxWidth*maxHeight];
     int atlasRow = maxWidth*characters.size();
-    std::map<char, glm::vec2> uvMap;
     int count = 0;
     for(std::pair<char, Character> pair : characters) {
         Character c = pair.second;
+        glBindTexture(GL_TEXTURE_2D, c.TextureID);
+        unsigned char* pixels = new unsigned char[c.Size.x * c.Size.y*4]{}; // 4 = RGBA channels
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         for (int i = 0; i < c.Size.y; ++i) {
             for (int j = 0; j < c.Size.x; ++j) {
                 // copy pixel data over
-                memcpy(atlas + (i*atlasRow+count*maxWidth+j)*4*sizeof(unsigned char), c.Buffer+(i*c.Size.x+j)*4*sizeof(unsigned char), 4);
+                memcpy(atlas + (i*atlasRow+count*maxWidth+j)*4*sizeof(unsigned char), pixels+(i*c.Size.x+j)*4*sizeof(unsigned char), 4);
             }
         }
         // store the x coordinates. Since it is a strip; y coordinates will always be 0 - 1
-        uvMap[pair.first] = {float(count) / characters.size(), (count+1) / characters.size()};
+        float cPos = (float)count / (float)characters.size();
+        // x-start, x-end, y-start, y-end
+        uvMap[pair.first] = {cPos, cPos + (float)c.Size.x / (float)atlasRow, 0, (float)c.Size.y / (float)maxHeight};
         count++;
     }
     glGenTextures(1, &atlasTex);
     glBindTexture(GL_TEXTURE_2D, atlasTex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlasRow, maxHeight,
              0, GL_RGBA, GL_UNSIGNED_BYTE, atlas);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     delete[] atlas;
-    for (int i = 0; i < uvMap.size(); ++i) {
-        std::cout << (char) i << ": " << uvMap[i].x << "-" << uvMap[i].y << std::endl;
-    }
-    std::cout << atlasRow << std::endl;
     input = "";
 }
 
@@ -152,10 +160,10 @@ int Terminal::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
     return 0;
 }
 
+// todo bundle all the data together and do a single draw call.
 void Terminal::renderText(Shader &shader, std::string text, float xInitial, float y, float width, float lineHeight, float scale, glm::vec3 color) {
     // activate corresponding render state
     shader.use();
-    // todo get VBO bind done in initialization
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
@@ -163,11 +171,13 @@ void Terminal::renderText(Shader &shader, std::string text, float xInitial, floa
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
     glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color.x, color.y, color.z);
     glActiveTexture(GL_TEXTURE0);
-
     // iterate through all characters
     float x = xInitial;
     std::string::const_iterator c;
     int i = 0;
+    std::vector<float> allVertices;
+    // Bind the atlas texture which has all characters in it.
+    glBindTexture(GL_TEXTURE_2D, atlasTex);
     for (c = text.begin(); c != text.end(); c++)
     {
         Character ch = characters[*c];
@@ -184,28 +194,29 @@ void Terminal::renderText(Shader &shader, std::string text, float xInitial, floa
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
         // update VBO for each character
-        float vertices[6][4] = {
-            { xpos,     ypos + h,   0.0f, 0.0f },
-            { xpos,     ypos,       0.0f, 1.0f },
-            { xpos + w, ypos,       1.0f, 1.0f },
+        float vertices[] = {
+             xpos,     ypos + h,   uvMap[*c].x, uvMap[*c].z,
+             xpos,     ypos,       uvMap[*c].x, uvMap[*c].w,
+             xpos + w, ypos,       uvMap[*c].y, uvMap[*c].w,
 
-            { xpos,     ypos + h,   0.0f, 0.0f },
-            { xpos + w, ypos,       1.0f, 1.0f },
-            { xpos + w, ypos + h,   1.0f, 0.0f }
+             xpos,     ypos + h,   uvMap[*c].x, uvMap[*c].z,
+             xpos + w, ypos,       uvMap[*c].y, uvMap[*c].w,
+             xpos + w, ypos + h,   uvMap[*c].y, uvMap[*c].z,
         };
-        // todo figure out how inefficient this is
-        // render glyph texture over quad
-        glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-        // update content of VBO memory
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // be sure to use glBufferSubData and not glBufferData
-        // render quad
-        // todo make this less shit (why not render all at once?)
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // todo clean up
+        for (float f: vertices) {
+            allVertices.push_back(f);
+        }
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
         i++;
     }
+    glBindTexture(GL_TEXTURE_2D, atlasTex);
+    // update content of VBO memory
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, allVertices.size()*sizeof(float), allVertices.data(), GL_STATIC_DRAW); // be sure to use glBufferSubData and not glBufferData
+    // render quads
+    glDrawArrays(GL_TRIANGLES, 0, allVertices.size() / 4);
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
