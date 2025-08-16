@@ -22,11 +22,14 @@
 static const glm::vec3 GREEN = {0, 0.9, 0};
 static const glm::vec3 BLUE = {0.4, 0.4, 0.9};
 static const glm::vec3 RED = {0.9, 0.4, 0.4};
+static const glm::vec3 WHITE = {0.8, 0.8, 0.8};
+
 
 struct Character {
  unsigned int TextureID; // ID handle of the glyph texture
  glm::ivec2   Size;      // Size of glyph
- glm::ivec2   Bearing;   // Offset from baseline to left/top of glyph
+ glm::ivec2   Bearing;// Offset from baseline to left/top of glyph
+ unsigned char* Buffer;
  unsigned int Advance;   // Horizontal offset to advance to next glyph
 };
 
@@ -43,6 +46,7 @@ struct Line {
 class Terminal {
 public:
   static Shader *shader;
+  GLuint atlasTex;
   int* width;
   int* height;
   FileNode *node;
@@ -76,6 +80,7 @@ public:
   void readCommand();
   void ls(const std::string_view path);
   void cd(const std::string_view path);
+  void cat(std::string_view path);
 };
 
 #endif //TERMINAL_H

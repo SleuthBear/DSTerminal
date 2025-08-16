@@ -12,7 +12,6 @@ void scrollCallback(GLFWwindow *window, double xOffset, double yOffset);
 void charCallback(GLFWwindow *window, unsigned int codepoint);
 Shader* Terminal::shader = nullptr;  // Definition
 
-// todo take the vertex binding stuff out and put in the render call
 Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> pushToStack, int *width, int *height) {
     this->width = width;
     this->height = height;
@@ -61,6 +60,8 @@ Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> 
     // disable byte-alignment restriction
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+    int maxWidth = 0;
+    int maxHeight = 0;
     // load first 128 characters of ASCII set
     for (unsigned char c = 0; c < 128; c++)
     {
@@ -85,6 +86,7 @@ Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> 
             GL_UNSIGNED_BYTE,
             face->glyph->bitmap.buffer
         );
+
         // set texture options
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -95,8 +97,11 @@ Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> 
             texture,
             glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
             glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-            static_cast<unsigned int>(face->glyph->advance.x)
+            face->glyph->bitmap.buffer,
+            static_cast<unsigned int>(face->glyph->advance.x),
         };
+        maxWidth = std::max(character.Size.x, maxWidth);
+        maxHeight = std::max(character.Size.y, maxHeight);
         characters.insert(std::pair<char, Character>(c, character));
     }
     lHeight = static_cast<float>(characters['l'].Size.y);
@@ -104,6 +109,33 @@ Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> 
     // destroy FreeType once we're finished
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
+
+    // just a very long texture
+    unsigned char *atlas = new unsigned char[characters.size()*maxWidth*maxHeight];
+    int atlasRow = maxWidth*characters.size();
+    std::map<char, glm::vec2> uvMap;
+    int count = 0;
+    for(std::pair<char, Character> pair : characters) {
+        Character c = pair.second;
+        for (int i = 0; i < c.Size.y; ++i) {
+            for (int j = 0; j < c.Size.x; ++j) {
+                // copy pixel data over
+                memcpy(atlas + (i*atlasRow+count*maxWidth+j)*4*sizeof(unsigned char), c.Buffer+(i*c.Size.x+j)*4*sizeof(unsigned char), 4);
+            }
+        }
+        // store the x coordinates. Since it is a strip; y coordinates will always be 0 - 1
+        uvMap[pair.first] = {float(count) / characters.size(), (count+1) / characters.size()};
+        count++;
+    }
+    glGenTextures(1, &atlasTex);
+    glBindTexture(GL_TEXTURE_2D, atlasTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlasRow, maxHeight,
+             0, GL_RGBA, GL_UNSIGNED_BYTE, atlas);
+    delete[] atlas;
+    for (int i = 0; i < uvMap.size(); ++i) {
+        std::cout << (char) i << ": " << uvMap[i].x << "-" << uvMap[i].y << std::endl;
+    }
+    std::cout << atlasRow << std::endl;
     input = "";
 }
 
@@ -116,7 +148,7 @@ int Terminal::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
         active = true;
     }
     processInput(window, keyState, deltaTime);
-    renderBuffer(*shader, {5.0f, 5.0f}, (float)800-15.0f, (float)800-15.0f);
+    renderBuffer(*shader, {5.0f, 5.0f}, (float)*width-15.0f, (float)*height-15.0f);
     return 0;
 }
 
@@ -288,6 +320,13 @@ void Terminal::readCommand() {
         }
         cd(text.substr(3, text.length()-3));
     }
+    if (text.substr(0,3) == "cat") {
+        if (text.length() < 4) {
+            addLine({"Invalid file target", RED, DS_SYS});
+            return;
+        }
+        cat(text.substr(3, text.length()-3));
+    }
 }
 
 void Terminal::ls(std::string_view path) {
@@ -318,7 +357,7 @@ void Terminal::cd(const std::string_view path) {
     }
     if (pos->name.find(".lock") != -1) {
         node = pos;
-        CylinderLock *lock = new CylinderLock{10, 2, 400, 400, 100, this};
+        CylinderLock *lock = new CylinderLock{10, 2, 100, this, width, height};
         pushToStack({
             [lock](GLFWwindow* _window, KeyState *_keyState, double _deltaTime){return lock->update(_window, _keyState, _deltaTime);},
                 [lock]() {delete lock;}
@@ -326,6 +365,30 @@ void Terminal::cd(const std::string_view path) {
         active = false;
     }
     node = pos;
+}
+
+void Terminal::cat(const std::string_view path) {
+    std::string response;
+    // Recurse through the path and try exit out if you fail to get to the end
+    FileNode *pos = node;
+    pos = followPath(pos, path);
+    if (pos == nullptr) {
+        addLine({"Invalid path.", RED, DS_SYS});
+        return;
+    }
+    if (pos->type != DS_FILE) {
+        addLine({"Not a file." + pos->name, RED, DS_SYS});
+        return;
+    }
+    std::string fileRef = pos->fileRef;
+    std::ifstream stream("../files/" + fileRef);
+    if(!stream.is_open()) {
+        addLine({"Unable to open the file.", RED, DS_SYS});
+    }
+    std::string line;
+    while (std::getline(stream, line)) {
+        addLine({line, WHITE, DS_SYS});
+    }
 }
 
 void Terminal::processInput(GLFWwindow *window, KeyState* keyState, double deltaTime) {

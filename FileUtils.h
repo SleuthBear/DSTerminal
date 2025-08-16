@@ -7,6 +7,7 @@
 #include <string>
 
 #include "json.h"
+#include "KeyState.h"
 
 using json = nlohmann::json;
 
@@ -16,6 +17,7 @@ struct FileNode {
     FileNode *parent;
     FileNode **children;
     int nChildren;
+    std::string fileRef;
 };
 
 FileNode* getNode(json data);
@@ -35,6 +37,9 @@ inline FileNode* readSystem(const std::string& filePath) {
 inline FileNode* getNode(json data) {
     if (data["name"].empty()) return nullptr;
     FileNode* newNode = new FileNode{data["name"], data["type"], nullptr, nullptr, 0};
+    if (newNode->type == DS_FILE) {
+        newNode->fileRef = data["file_ref"];
+    }
     // DO NOT stack allocate this recursively (for obvious reasons)
     int capacity = 4;
     FileNode **children = (FileNode**) malloc(sizeof(FileNode*) * capacity);

@@ -9,7 +9,11 @@
 Shader* CylinderLock::shader = nullptr;  // Definition
 
 #define PI 3.14159265
-CylinderLock::CylinderLock(int segments, double rotSpeed, float posX, float posY, float radius, Terminal *terminal) {
+CylinderLock::CylinderLock(int segments, double rotSpeed, float radius, Terminal *terminal, int *width, int *height) {
+    this->width = width;
+    this->height = height;
+    this->posX = *width / 2.0;
+    this->posY = *width / 2.0;
     this->terminal = terminal;
     this->segments = segments;
     this->rotSpeed = rotSpeed;
@@ -30,6 +34,8 @@ int CylinderLock::update(GLFWwindow *window, KeyState *keyState, double deltaTim
         glfwSetScrollCallback(window, nullptr);
         active = true;
     }
+    posX = *width / 2.0;
+    posY = *height / 2.0;
     int finished = processInput(window, keyState, deltaTime);
     rotateLock(deltaTime);
     render();

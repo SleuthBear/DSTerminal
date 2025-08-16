@@ -3,34 +3,207 @@
     "type": 0,
     "children": [
         {
-            "name": "testDir1",
+            "name": "Geometry.cpp",
+            "type": 1,
+            "children": [],
+            "file_ref": "Geometry_1697775741.cpp"
+        },
+        {
+            "name": "Skybox.h",
+            "type": 1,
+            "children": [],
+            "file_ref": "Skybox_3457829866.h"
+        },
+        {
+            "name": "Floor.cpp",
+            "type": 1,
+            "children": [],
+            "file_ref": "Floor_4006744451.cpp"
+        },
+        {
+            "name": "Cube.h",
+            "type": 1,
+            "children": [],
+            "file_ref": "Cube_2324324833.h"
+        },
+        {
+            "name": "Skybox.cpp",
+            "type": 1,
+            "children": [],
+            "file_ref": "Skybox_2548221297.cpp"
+        },
+        {
+            "name": "Terminal.cpp",
+            "type": 1,
+            "children": [],
+            "file_ref": "Terminal_2302586381.cpp"
+        },
+        {
+            "name": "Terminal.h",
+            "type": 1,
+            "children": [],
+            "file_ref": "Terminal_1080204960.h"
+        },
+        {
+            "name": "Terrain",
             "type": 0,
             "children": [
                 {
-                    "name": "text.txt",
+                    "name": "Textures",
+                    "type": 0,
+                    "children": [
+                        {
+                            "name": "concrete_floor.jpeg",
+                            "type": 1,
+                            "children": [],
+                            "file_ref": "concrete_floor_3660577358.jpeg"
+                        },
+                        {
+                            "name": "concrete_floor_specular.jpg",
+                            "type": 1,
+                            "children": [],
+                            "file_ref": "concrete_floor_specular_2283909802.jpg"
+                        }
+                    ]
+                },
+                {
+                    "name": "Floor.cpp",
                     "type": 1,
                     "children": [],
-                    "file_ref": "text_2218509980.txt"
+                    "file_ref": "Floor_2570219538.cpp"
+                },
+                {
+                    "name": "Floor.h",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "Floor_199463607.h"
                 }
             ]
         },
         {
-            "name": "testDir2",
+            "name": "Geometry",
             "type": 0,
             "children": [
                 {
-                    "name": "cyclinder5.lock",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "cyclinder5_1764793389.lock"
+                    "name": "Textures",
+                    "type": 0,
+                    "children": []
                 },
                 {
-                    "name": "app.exe",
+                    "name": "Geometry.cpp",
                     "type": 1,
                     "children": [],
-                    "file_ref": "app_1465201045.exe"
+                    "file_ref": "Geometry_1348680805.cpp"
+                },
+                {
+                    "name": "Cube.h",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "Cube_2721262384.h"
+                },
+                {
+                    "name": "Terminal.cpp",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "Terminal_1460471055.cpp"
+                },
+                {
+                    "name": "Terminal.h",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "Terminal_328548353.h"
+                },
+                {
+                    "name": "Cube.cpp",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "Cube_250646444.cpp"
+                },
+                {
+                    "name": "Geometry.h",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "Geometry_3422095505.h"
                 }
             ]
+        },
+        {
+            "name": "Cube.cpp",
+            "type": 1,
+            "children": [],
+            "file_ref": "Cube_3653205711.cpp"
+        },
+        {
+            "name": "Skybox",
+            "type": 0,
+            "children": [
+                {
+                    "name": "textures",
+                    "type": 0,
+                    "children": [
+                        {
+                            "name": "bottom.jpg",
+                            "type": 1,
+                            "children": [],
+                            "file_ref": "bottom_648690733.jpg"
+                        },
+                        {
+                            "name": "left.jpg",
+                            "type": 1,
+                            "children": [],
+                            "file_ref": "left_1919458529.jpg"
+                        },
+                        {
+                            "name": "top.jpg",
+                            "type": 1,
+                            "children": [],
+                            "file_ref": "top_3672763941.jpg"
+                        },
+                        {
+                            "name": "back.jpg",
+                            "type": 1,
+                            "children": [],
+                            "file_ref": "back_1680590835.jpg"
+                        },
+                        {
+                            "name": "right.jpg",
+                            "type": 1,
+                            "children": [],
+                            "file_ref": "right_2482787524.jpg"
+                        },
+                        {
+                            "name": "front.jpg",
+                            "type": 1,
+                            "children": [],
+                            "file_ref": "front_3272246271.jpg"
+                        }
+                    ]
+                },
+                {
+                    "name": "Skybox.h",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "Skybox_4052984597.h"
+                },
+                {
+                    "name": "Skybox.cpp",
+                    "type": 1,
+                    "children": [],
+                    "file_ref": "Skybox_3000651038.cpp"
+                }
+            ]
+        },
+        {
+            "name": "Floor.h",
+            "type": 1,
+            "children": [],
+            "file_ref": "Floor_2981801643.h"
+        },
+        {
+            "name": "Geometry.h",
+            "type": 1,
+            "children": [],
+            "file_ref": "Geometry_1663324649.h"
         }
     ]
 }

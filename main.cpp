@@ -16,8 +16,8 @@
 #include "Terminal.h"
 
 // Stuff that needs to be done.
-// TODO clean up all of the shader passing etc. Use pointers. Compiler probably handles it. But still shit.
-// TODO pressing up copy last command (steps back each time)
+// TODO pass screen side pointers properly
+// TODO ls is DEFINITELY memory leaking
 
 GLFWwindow* setup();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -96,6 +96,7 @@ int main()
         glClearColor(0.0f, 0.05f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        projection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
         // todo Look into why I need this
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(lockShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
@@ -169,6 +170,7 @@ void processInput(GLFWwindow *window)
  */
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+    std::cout << "framebuffer callback\n";
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
