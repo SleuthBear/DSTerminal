@@ -1,7 +1,8 @@
 #include <iostream>
 #include <string>
 #include <glad/glad.h>
-// #include <glfw/glfw3.h>
+#define GLFW_INCLUDE_NONE
+#include <glfw/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -9,15 +10,18 @@
 
 #include "CylinderLock.h"
 #include "GameLayer.h"
+#include "Imp.h"
 #include "KeyState.h"
 
 #include FT_FREETYPE_H
 #include "Shader.h"
 #include "Terminal.h"
+#include <unistd.h> // For Unix-like systems
 
 // Stuff that needs to be done.
-// TODO pass screen side pointers properly
-// TODO ls is DEFINITELY memory leaking
+// TODO nicer wrapping
+// TODO animations for cylinder lock.
+// TODO split command args
 
 GLFWwindow* setup();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -67,37 +71,42 @@ int main()
     Terminal::shader = &shader;
     Shader lockShader("../shaders/lock.vert", "../shaders/lock.frag");
     CylinderLock::shader = &lockShader;
+    Shader impShader("../shaders/imp.vert", "../shaders/imp.frag");
+    Imp imp = Imp(&SCR_WIDTH, &SCR_HEIGHT);
+    imp.shader = &impShader;
+    imp.textShader = &shader;
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
 
     // Create keyState for handling inputs
     KeyState keyState = {};
     double deltaTime = 0.0f;
-    double windowTime = -0.1667f;
+    double windowTime = 0.01667f;
 
     std::stack<GameLayer> gameStack = {};
 
     // Create terminal
     FileNode *root = readSystem("../root.json");
     Terminal terminal = Terminal(*root, *root, [&gameStack](GameLayer gl) {gameStack.push(gl);}, &SCR_WIDTH, &SCR_HEIGHT);
+    terminal.imp = &imp;
     gameStack.push(
         { [&terminal](GLFWwindow *_window, KeyState *_keyState, double _deltaTime){return terminal.update(_window, _keyState, _deltaTime);},
         [&terminal]() {return;} }
     );
-
+    usleep(500);
     // START MAIN LOOP //
     while (!glfwWindowShouldClose(window))
     {
         double curTime = glfwGetTime();
         deltaTime = curTime-windowTime;
         windowTime = glfwGetTime();
-
+        // std::cout << 1.0 / deltaTime << " FPS\n";
         processInput(window);
 
         glClearColor(0.0f, 0.05f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         projection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
-        // todo Look into why I need this
+        // todo Look into why I need this + make it cleaner
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(lockShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         // TODO look into doing this with unique pointers instead.
@@ -105,7 +114,6 @@ int main()
             gameStack.top().cleanup();
             gameStack.pop();
         }
-
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

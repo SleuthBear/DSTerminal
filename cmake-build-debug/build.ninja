@@ -96,6 +96,48 @@ build CMakeFiles/DSTerminal.dir/Terminal.cpp.o: CXX_COMPILER__DSTerminal_unscann
   OBJECT_DIR = CMakeFiles/DSTerminal.dir
   OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir
 
+build CMakeFiles/DSTerminal.dir/CylinderLock.cpp.o: CXX_COMPILER__DSTerminal_unscanned_Debug /Users/dylanbeaumont/Desktop/DSTerminal/CylinderLock.cpp || cmake_object_order_depends_target_DSTerminal
+  DEP_FILE = CMakeFiles/DSTerminal.dir/CylinderLock.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -fcolor-diagnostics
+  INCLUDES = -I/Users/dylanbeaumont/Desktop/DSTerminal/include -I/opt/homebrew/include/freetype2 -I/Users/dylanbeaumont/Desktop/DSTerminal/include/glad -isystem /Users/dylanbeaumont/Desktop/DSTerminal/include/glfw
+  OBJECT_DIR = CMakeFiles/DSTerminal.dir
+  OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir
+
+build CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image.cpp.o: CXX_COMPILER__DSTerminal_unscanned_Debug /Users/dylanbeaumont/Desktop/DSTerminal/include/STB_IMAGE/stb_image.cpp || cmake_object_order_depends_target_DSTerminal
+  DEP_FILE = CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -fcolor-diagnostics
+  INCLUDES = -I/Users/dylanbeaumont/Desktop/DSTerminal/include -I/opt/homebrew/include/freetype2 -I/Users/dylanbeaumont/Desktop/DSTerminal/include/glad -isystem /Users/dylanbeaumont/Desktop/DSTerminal/include/glfw
+  OBJECT_DIR = CMakeFiles/DSTerminal.dir
+  OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir/include/STB_IMAGE
+
+build CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image_write.cpp.o: CXX_COMPILER__DSTerminal_unscanned_Debug /Users/dylanbeaumont/Desktop/DSTerminal/include/STB_IMAGE/stb_image_write.cpp || cmake_object_order_depends_target_DSTerminal
+  DEP_FILE = CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image_write.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -fcolor-diagnostics
+  INCLUDES = -I/Users/dylanbeaumont/Desktop/DSTerminal/include -I/opt/homebrew/include/freetype2 -I/Users/dylanbeaumont/Desktop/DSTerminal/include/glad -isystem /Users/dylanbeaumont/Desktop/DSTerminal/include/glfw
+  OBJECT_DIR = CMakeFiles/DSTerminal.dir
+  OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir/include/STB_IMAGE
+
+build CMakeFiles/DSTerminal.dir/Imp.cpp.o: CXX_COMPILER__DSTerminal_unscanned_Debug /Users/dylanbeaumont/Desktop/DSTerminal/Imp.cpp || cmake_object_order_depends_target_DSTerminal
+  DEP_FILE = CMakeFiles/DSTerminal.dir/Imp.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -fcolor-diagnostics
+  INCLUDES = -I/Users/dylanbeaumont/Desktop/DSTerminal/include -I/opt/homebrew/include/freetype2 -I/Users/dylanbeaumont/Desktop/DSTerminal/include/glad -isystem /Users/dylanbeaumont/Desktop/DSTerminal/include/glfw
+  OBJECT_DIR = CMakeFiles/DSTerminal.dir
+  OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir
+
+build CMakeFiles/DSTerminal.dir/utils/TextureLoader.cpp.o: CXX_COMPILER__DSTerminal_unscanned_Debug /Users/dylanbeaumont/Desktop/DSTerminal/utils/TextureLoader.cpp || cmake_object_order_depends_target_DSTerminal
+  DEP_FILE = CMakeFiles/DSTerminal.dir/utils/TextureLoader.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -fcolor-diagnostics
+  INCLUDES = -I/Users/dylanbeaumont/Desktop/DSTerminal/include -I/opt/homebrew/include/freetype2 -I/Users/dylanbeaumont/Desktop/DSTerminal/include/glad -isystem /Users/dylanbeaumont/Desktop/DSTerminal/include/glfw
+  OBJECT_DIR = CMakeFiles/DSTerminal.dir
+  OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir/utils
+
+build CMakeFiles/DSTerminal.dir/utils/TextUtil.cpp.o: CXX_COMPILER__DSTerminal_unscanned_Debug /Users/dylanbeaumont/Desktop/DSTerminal/utils/TextUtil.cpp || cmake_object_order_depends_target_DSTerminal
+  DEP_FILE = CMakeFiles/DSTerminal.dir/utils/TextUtil.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -fcolor-diagnostics
+  INCLUDES = -I/Users/dylanbeaumont/Desktop/DSTerminal/include -I/opt/homebrew/include/freetype2 -I/Users/dylanbeaumont/Desktop/DSTerminal/include/glad -isystem /Users/dylanbeaumont/Desktop/DSTerminal/include/glfw
+  OBJECT_DIR = CMakeFiles/DSTerminal.dir
+  OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir/utils
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target DSTerminal
@@ -104,7 +146,7 @@ build CMakeFiles/DSTerminal.dir/Terminal.cpp.o: CXX_COMPILER__DSTerminal_unscann
 #############################################
 # Link the executable DSTerminal
 
-build DSTerminal: CXX_EXECUTABLE_LINKER__DSTerminal_Debug CMakeFiles/DSTerminal.dir/main.cpp.o CMakeFiles/DSTerminal.dir/Terminal.cpp.o | /Users/dylanbeaumont/Desktop/DSTerminal/include/bin/libglfw3.a libGLAD.a /opt/homebrew/lib/libfreetype.dylib || libGLAD.a
+build DSTerminal: CXX_EXECUTABLE_LINKER__DSTerminal_Debug CMakeFiles/DSTerminal.dir/main.cpp.o CMakeFiles/DSTerminal.dir/Terminal.cpp.o CMakeFiles/DSTerminal.dir/CylinderLock.cpp.o CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image.cpp.o CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image_write.cpp.o CMakeFiles/DSTerminal.dir/Imp.cpp.o CMakeFiles/DSTerminal.dir/utils/TextureLoader.cpp.o CMakeFiles/DSTerminal.dir/utils/TextUtil.cpp.o | /Users/dylanbeaumont/Desktop/DSTerminal/include/bin/libglfw3.a libGLAD.a /opt/homebrew/lib/libfreetype.dylib || libGLAD.a
   FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk
   LINK_LIBRARIES = /Users/dylanbeaumont/Desktop/DSTerminal/include/bin/libglfw3.a  libGLAD.a  /opt/homebrew/lib/libfreetype.dylib  -framework Cocoa  -framework IOKit  -framework CoreVideo  -framework CoreFoundation
   OBJECT_DIR = CMakeFiles/DSTerminal.dir

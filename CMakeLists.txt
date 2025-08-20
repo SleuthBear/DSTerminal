@@ -25,13 +25,18 @@ add_executable(DSTerminal main.cpp
         Terminal.h
         KeyState.h
         include/json.h
-        FileUtils.h
+        utils/FileUtils.h
         CylinderLock.cpp
         CylinderLock.h
         GameLayer.h
         include/STB_IMAGE/stb_image.cpp
         include/STB_IMAGE/stb_image.h
         include/STB_IMAGE/stb_image_write.cpp
+        Imp.cpp
+        Imp.h
+        utils/TextureLoader.cpp
+        utils/TextUtil.cpp
+        utils/TextUtil.h
 )
 
 target_link_libraries(DSTerminal PRIVATE

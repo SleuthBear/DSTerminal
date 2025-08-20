@@ -34,121 +34,11 @@ Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> 
     for (int i = 0; i < MAX_COMMAND_LOOKBACK; i++) {
         commands[i] = {"", GREEN, DS_USER};
     }
-    FT_Library ft;
-    // All functions return a value different than 0 whenever an error occurred
-    if (FT_Init_FreeType(&ft))
-    {
-        std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
-        exit(1);
-    }
-
-	// find path to font
-    std::string font_name = "../resources/ModernDOS.ttf"; // Third-party fonts
-    if (font_name.empty())
-    {
-        std::cout << "ERROR::FREETYPE: Failed to load font_name" << std::endl;
-        exit(1);
-    }
-
-	// load font as face
-    FT_Face face;
-    if (FT_New_Face(ft, font_name.c_str(), 0, &face)) {
-        std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
-        exit(1);
-    }
-    // set size to load glyphs as
-    FT_Set_Pixel_Sizes(face, 0, 48);
-
-    // disable byte-alignment restriction
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-    int maxWidth = 0;
-    int maxHeight = 0;
-    // load first 128 characters of ASCII set
-    for (unsigned char c = 0; c < 128; c++)
-    {
-        // Load character glyph
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-        {
-            std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
-            continue;
-        }
-        // generate texture
-        unsigned int texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RED,
-            face->glyph->bitmap.width,
-            face->glyph->bitmap.rows,
-            0,
-            GL_RED,
-            GL_UNSIGNED_BYTE,
-            face->glyph->bitmap.buffer
-        );
-
-        // set texture options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // now store character for later use
-        Character character = {
-            texture,
-            glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-            glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-            face->glyph->bitmap.buffer,
-            static_cast<unsigned int>(face->glyph->advance.x),
-        };
-        maxWidth = std::max(character.Size.x, maxWidth);
-        maxHeight = std::max(character.Size.y, maxHeight);
-        characters.insert(std::pair<char, Character>(c, character));
-    }
-    lHeight = static_cast<float>(characters['l'].Size.y);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    // destroy FreeType once we're finished
-    FT_Done_Face(face);
-    FT_Done_FreeType(ft);
-
-    // just a very long texture
-    unsigned char *atlas = new unsigned char[characters.size()*maxWidth*maxHeight];
-    int atlasRow = maxWidth*characters.size();
-    int count = 0;
-    for(std::pair<char, Character> pair : characters) {
-        Character c = pair.second;
-        glBindTexture(GL_TEXTURE_2D, c.TextureID);
-        unsigned char* pixels = new unsigned char[c.Size.x * c.Size.y*4]{}; // 4 = RGBA channels
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-        for (int i = 0; i < c.Size.y; ++i) {
-            for (int j = 0; j < c.Size.x; ++j) {
-                // copy pixel data over
-                memcpy(atlas + (i*atlasRow+count*maxWidth+j)*4*sizeof(unsigned char), pixels+(i*c.Size.x+j)*4*sizeof(unsigned char), 4);
-            }
-        }
-        // store the x coordinates. Since it is a strip; y coordinates will always be 0 - 1
-        float cPos = (float)count / (float)characters.size();
-        // x-start, x-end, y-start, y-end
-        uvMap[pair.first] = {cPos, cPos + (float)c.Size.x / (float)atlasRow, 0, (float)c.Size.y / (float)maxHeight};
-        count++;
-    }
-    glGenTextures(1, &atlasTex);
-    glBindTexture(GL_TEXTURE_2D, atlasTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlasRow, maxHeight,
-             0, GL_RGBA, GL_UNSIGNED_BYTE, atlas);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    delete[] atlas;
+    createBitMap("../resources/ModernDOS.ttf", &atlasTex, characters);
     input = "";
 }
 
 int Terminal::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
-    // todo fix magic numbers
     if (!active) {
         glfwSetWindowUserPointer(window, this);
         glfwSetCharCallback(window, charCallback);
@@ -157,11 +47,12 @@ int Terminal::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
     }
     processInput(window, keyState, deltaTime);
     renderBuffer(*shader, {5.0f, 5.0f}, (float)*width-15.0f, (float)*height-15.0f);
+    imp->update(window, deltaTime);
+    shader->use();
     return 0;
 }
 
-// todo bundle all the data together and do a single draw call.
-void Terminal::renderText(Shader &shader, std::string text, float xInitial, float y, float width, float lineHeight, float scale, glm::vec3 color) {
+void Terminal::renderText(Shader &shader, std::string text, float xInitial, float y, std::vector<int> lineWraps, float width, float lineHeight, float scale, glm::vec3 color) {
     // activate corresponding render state
     shader.use();
     glBindVertexArray(VAO);
@@ -177,39 +68,37 @@ void Terminal::renderText(Shader &shader, std::string text, float xInitial, floa
     int i = 0;
     std::vector<float> allVertices;
     // Bind the atlas texture which has all characters in it.
+    int at = 0;
     glBindTexture(GL_TEXTURE_2D, atlasTex);
-    for (c = text.begin(); c != text.end(); c++)
-    {
-        Character ch = characters[*c];
+    for (int nChars : lineWraps) {
+        for (int j = 0; j < nChars; ++j) {
+            char c = text[at++];
+            Character ch = characters[c];
+            float xPos = x + ch.Bearing.x * scale;
+            float yPos = y - (ch.Size.y - ch.Bearing.y) * scale;
 
-        float xpos = x + ch.Bearing.x * scale;
-        // If we have wrapped, move down a line then keep printing.
-        if (xpos >= width) {
-            y -= lineHeight;
-            x = xInitial;
-            xpos = x + ch.Bearing.x * scale;
+            float w = ch.Size.x * scale;
+            float h = ch.Size.y * scale;
+            // update VBO for each character
+            float vertices[] = {
+                 xPos,     yPos + h,   ch.uv.x, ch.uv.z,
+                 xPos,     yPos,       ch.uv.x, ch.uv.w,
+                 xPos + w, yPos,       ch.uv.y, ch.uv.w,
+
+                 xPos,     yPos + h,   ch.uv.x, ch.uv.z,
+                 xPos + w, yPos,       ch.uv.y, ch.uv.w,
+                 xPos + w, yPos + h,   ch.uv.y, ch.uv.z,
+            };
+            // todo clean up
+            for (float f: vertices) {
+                allVertices.push_back(f);
+            }
+            // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+            x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+            i++;
         }
-        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
-
-        float w = ch.Size.x * scale;
-        float h = ch.Size.y * scale;
-        // update VBO for each character
-        float vertices[] = {
-             xpos,     ypos + h,   uvMap[*c].x, uvMap[*c].z,
-             xpos,     ypos,       uvMap[*c].x, uvMap[*c].w,
-             xpos + w, ypos,       uvMap[*c].y, uvMap[*c].w,
-
-             xpos,     ypos + h,   uvMap[*c].x, uvMap[*c].z,
-             xpos + w, ypos,       uvMap[*c].y, uvMap[*c].w,
-             xpos + w, ypos + h,   uvMap[*c].y, uvMap[*c].z,
-        };
-        // todo clean up
-        for (float f: vertices) {
-            allVertices.push_back(f);
-        }
-        // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
-        i++;
+        x = xInitial;
+        y -= lineHeight;
     }
     glBindTexture(GL_TEXTURE_2D, atlasTex);
     // update content of VBO memory
@@ -221,33 +110,48 @@ void Terminal::renderText(Shader &shader, std::string text, float xInitial, floa
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-int Terminal::getLineWraps(std::string_view text, float x, float width, float scale) {
+std::vector<int> Terminal::getLineWraps(std::string_view text, float x, float width, float scale) {
     int wraps = 1;
     std::string_view::const_iterator c;
-    for (c = text.begin(); c != text.end(); c++)
-    {
-        Character ch = characters[*c];
-        float xpos = x + ch.Bearing.x * scale;
-        // Check for wrapping
-        if (xpos >= width) {
+    std::vector<int> lineWraps;
+    int lineEnd = -1;
+    int lineStart = 0;
+    int i = 0;
+    for (i = 0; i < text.length(); ++i) {
+        Character ch = characters[text[i]];
+        if (text[i] == ' ' && i > 2) {
+            lineEnd = i;
+        }
+        float xPos = x + ch.Bearing.x * scale;
+        if (xPos >= width) {
+            if (lineEnd == -1) {
+                lineWraps.push_back(i-lineStart);
+                lineStart = i;
+            } else {
+                lineWraps.push_back(lineEnd-lineStart+1);
+                lineStart = lineEnd+1;
+            }
+            lineEnd = -1;
             wraps += 1;
             x = 0;
+            for (int j = lineStart; j < i; j++) {
+                x += (float)(characters[text[j]].Advance >> 6) * scale;
+            }
         }
-        // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+        x += (float)(ch.Advance >> 6) * scale;
     }
-    return wraps;
+    lineWraps.push_back(i - lineStart);
+    return lineWraps;
 }
 
 // Render the terminal with top-left corner pos.
-// todo use string views
 void Terminal::renderBuffer(Shader shader, glm::vec2 pos, float width, float height) {
     shader.use();
     if (window == -1) return;
     // Subtract line spacing from height to space the bottom line.
     int nLines = ceil((height - LINE_SPACING) / lineHeight) + 1;
     float charHeight = lineHeight - LINE_SPACING;
-    float charScale = charHeight / lHeight;
+    float charScale = charHeight / (lineHeight*1.5);
     // We render nLines - 1. Because the last line is the one currently being typed.
     int printedLines = 0;
     // renderText(shader, "> " + input, pos.x, pos.y + (float)(printedLines-1)*lineHeight, width, lineHeight, charScale, GREEN);
@@ -271,11 +175,11 @@ void Terminal::renderBuffer(Shader shader, glm::vec2 pos, float width, float hei
                 toDisplay.replace(cursor+2, 1, "|");
             }
         }
-        printedLines += getLineWraps(toDisplay, 0, width, charScale); //renderTextWithWrap(shader, "> " + input, pos.x, pos.y, width, lineHeight, charScale, GREEN);
+        std::vector<int> wraps = getLineWraps(toDisplay, 0, width, charScale);
+        printedLines += wraps.size();
         // One line spacing to pad the input line
         float lineY =  LINE_SPACING + (lineHeight) * (float)(printedLines-1);
-
-        renderText(shader, toDisplay, pos.x, lineY, width, lineHeight, charScale, line.colour);
+        renderText(shader, toDisplay, pos.x, lineY, wraps, width, lineHeight, charScale, line.colour);
         // can't skip past the end of the buffer.
         if (window-i == end) {
             break;
@@ -315,28 +219,52 @@ void Terminal::readCommand() {
     commands[atCommand] = {std::string(lines[start].text), GREEN, DS_USER};
     viewingCommand = atCommand;
 
+
     std::string_view text = lines[start].text;
-    if (text.substr(0, 2) == "ls") {
-        if (text.length() < 3) {
+    std::vector<std::string_view> args;
+    int argIdx = text.find_first_not_of(' ');
+    while (argIdx != -1) {
+        text = text.substr(argIdx);
+        int argEnd = text.find_first_of(' ', argIdx);
+        int nextNewLine = text.find_first_of('\n', argIdx);
+        if (argEnd == -1 || (nextNewLine != -1 && nextNewLine < argEnd)) {
+           argEnd = nextNewLine;
+        }
+        if (argEnd == -1) {
+            argEnd = text.length();
+        }
+        args.emplace_back(text.substr(0, argEnd));
+        argIdx = text.find_first_not_of(' ', argEnd);
+    }
+    if (args.size() == 0) {
+        return;
+    }
+
+    if (args[0] == "ls") {
+        if (args.size() == 1) {
             ls("");
         } else {
-            ls(text.substr(3, text.length()-3));
+            ls(args[1]);
         }
         return;
     }
-    if (text.substr(0,2) == "cd") {
-        if (text.length() < 3) {
+    if (args[0] == "cd") {
+        if (args.size() == 1) {
             addLine({"Invalid file target", RED, DS_SYS});
             return;
         }
-        cd(text.substr(3, text.length()-3));
+        cd(args[1]);
     }
-    if (text.substr(0,3) == "cat") {
-        if (text.length() < 4) {
+    if (args[0] == "cat") {
+        if (args.size() == 1) {
             addLine({"Invalid file target", RED, DS_SYS});
             return;
         }
-        cat(text.substr(3, text.length()-3));
+        cat(args[1]);
+    }
+    if (args[0] == "help") {
+        imp->timeToSpeak = 5;
+        imp->text = "Help? Do I look like a butler?!";
     }
 }
 

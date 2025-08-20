@@ -6,8 +6,8 @@
 #include <codecvt>
 #include <string>
 
-#include "json.h"
-#include "KeyState.h"
+#include "../include/json.h"
+#include "../KeyState.h"
 
 using json = nlohmann::json;
 
