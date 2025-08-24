@@ -2,31 +2,40 @@
 // Created by Dylan Beaumont on 18/8/2025.
 //
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef TEXTUTIL_H
 #define TEXTUTIL_H
-#include <glad.h>
-#include <map>
-#include <string>
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
+#include "../include/cglm/cglm.h"
+
+// Macros used for interop with glm and cglm
+#define GREEN {0, 0.9, 0}
+#define BLUE {0.4, 0.4, 0.9}
+#define RED {0.9, 0.4, 0.4}
+#define WHITE {0.8, 0.8, 0.8}
+#define LINE_SPACING 5.0f
 
 
-
-static const glm::vec3 GREEN = {0, 0.9, 0};
-static const glm::vec3 BLUE = {0.4, 0.4, 0.9};
-static const glm::vec3 RED = {0.9, 0.4, 0.4};
-static const glm::vec3 WHITE = {0.8, 0.8, 0.8};
-
-struct Character {
- glm::ivec2   Size;      // Size of glyph
- glm::ivec2   Bearing;// Offset from baseline to left/top of glyph
+// Structs //
+typedef struct Character {
+ ivec2   Size;      // Size of glyph
+ ivec2   Bearing;// Offset from baseline to left/top of glyph
  unsigned int Advance;   // Horizontal offset to advance to next glyph
- glm::vec4    uv;
-};
+ vec4    uv;
+} Character;
 
-unsigned int createBitMap(std::string path, unsigned int *atlasTex, std::map<GLchar, Character> &characters);
+// typedef struct LineWraps {
+//  int nWraps;
+//  int* wraps;
+// } LineWraps;
 
-
+unsigned int createBitMap(const char* path, unsigned int* atlasTex, Character* characters);
+// LineWraps getLineWraps(const char* text, float width, float scale, Character* characters);
+// int renderText(const char* text, float xInitial, float y, float width, float lineHeight, float scale, Character* characters);
 
 #endif //TEXTUTIL_H
+#ifdef __cplusplus
+}
+#endif

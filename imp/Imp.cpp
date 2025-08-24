@@ -2,7 +2,7 @@
 // Created by Dylan Beaumont on 18/8/2025.
 //
 
-#include "Imp.h"
+#include "../imp/Imp.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -13,7 +13,6 @@ Imp::Imp(int* scrWidth, int* scrHeight) {
     this->scrHeight = scrHeight;
     TextureLoader texLoader;
     tex = texLoader.loadTexture("../resources/mon3_sprite_text.png");
-    printf("loaded texture imp\n");
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -24,7 +23,8 @@ Imp::Imp(int* scrWidth, int* scrHeight) {
 void Imp::update(GLFWwindow *window, double deltaTime) {
     time += deltaTime;
     glm::vec2 pos = {*scrWidth * 0.66, *scrHeight*0.66};
-    float scale = std::min(*scrWidth, *scrHeight)*0.25;
+    // float scale = std::min(*scrWidth, *scrHeight)*0.25;
+    float scale = 200.0f;
     glm::vec2 texCoord = frames[(int)fmod(time*5, 5)];
     // Logic for making the textbox big enough (irrelevant if not speaking)
     float charScale = 0.5;
@@ -75,21 +75,33 @@ void Imp::update(GLFWwindow *window, double deltaTime) {
         glBufferSubData(GL_ARRAY_BUFFER, 0, 24*sizeof(float), vertices);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
-    glFlush();
+    // glFlush();
 
     /// Now render the text
-    int cHeight = characters['l'].Size.y*1.5;
     if (timeToSpeak > 0) {
+        if (charsToPrint < text.length()) {
+            int oldCount = charsToPrint;
+            charsToPrint += deltaTime*printSpeed;
+            if (oldCount < (int)charsToPrint) {
+                soundManager->play();
+            }
+        }
+        int cHeight = characters['l'].Size[1]*1.5;
         timeToSpeak -= deltaTime;
         float charHeight = 0.90f*lineHeight;
         float charScale = charHeight / (cHeight);
         std::vector<int> wraps = getLineWraps(text, 0, 1.3f*scale, charScale);
         glUniformMatrix4fv(glGetUniformLocation(textShader->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        renderText(*textShader, text, pos.x-1.4f*scale, pos.y+0.8f*scale-lineHeight, wraps, 1.3f*scale, lineHeight, charScale, WHITE);
+        if ((int)charsToPrint > 0) {
+            vec3 color = WHITE;
+            renderText(*textShader, text, pos.x-1.4f*scale, pos.y+0.8f*scale-lineHeight, wraps, 1.3f*scale, lineHeight, charScale, color);
+        }
+    } else {
+        charsToPrint = 0;
     }
 }
 
-void Imp::renderText(Shader &shader, std::string text, float xInitial, float y, std::vector<int> lineWraps, float width, float lineHeight, float scale, glm::vec3 color) {
+void Imp::renderText(Shader &shader, std::string text, float xInitial, float y, std::vector<int> lineWraps, float width, float lineHeight, float scale, vec3 color) {
     // activate corresponding render state
     shader.use();
     glBindVertexArray(VAO);
@@ -97,7 +109,7 @@ void Imp::renderText(Shader &shader, std::string text, float xInitial, float y, 
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
-    glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color.x, color.y, color.z);
+    glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color[0], color[1], color[1]);
     glActiveTexture(GL_TEXTURE0);
     // iterate through all characters
     float x = xInitial;
@@ -111,20 +123,20 @@ void Imp::renderText(Shader &shader, std::string text, float xInitial, float y, 
         for (int j = 0; j < nChars; ++j) {
             char c = text[at++];
             Character ch = characters[c];
-            float xPos = x + ch.Bearing.x * scale;
-            float yPos = y - (ch.Size.y - ch.Bearing.y) * scale;
+            float xPos = x + ch.Bearing[0] * scale;
+            float yPos = y - (ch.Size[1] - ch.Bearing[1]) * scale;
 
-            float w = ch.Size.x * scale;
-            float h = ch.Size.y * scale;
+            float w = ch.Size[0] * scale;
+            float h = ch.Size[1] * scale;
             // update VBO for each character
             float vertices[] = {
-                 xPos,     yPos + h,   ch.uv.x, ch.uv.z,
-                 xPos,     yPos,       ch.uv.x, ch.uv.w,
-                 xPos + w, yPos,       ch.uv.y, ch.uv.w,
+                 xPos,     yPos + h,   ch.uv[0], ch.uv[2],
+                 xPos,     yPos,       ch.uv[0], ch.uv[3],
+                 xPos + w, yPos,       ch.uv[1], ch.uv[3],
 
-                 xPos,     yPos + h,   ch.uv.x, ch.uv.z,
-                 xPos + w, yPos,       ch.uv.y, ch.uv.w,
-                 xPos + w, yPos + h,   ch.uv.y, ch.uv.z,
+                 xPos,     yPos + h,   ch.uv[0], ch.uv[2],
+                 xPos + w, yPos,       ch.uv[1], ch.uv[3],
+                 xPos + w, yPos + h,   ch.uv[1], ch.uv[2],
             };
             // todo clean up
             for (float f: vertices) {
@@ -139,10 +151,11 @@ void Imp::renderText(Shader &shader, std::string text, float xInitial, float y, 
     }
     glBindTexture(GL_TEXTURE_2D, atlasTex);
     // update content of VBO memory
+    int toPrint = std::min((int)allVertices.size(), (int)charsToPrint*24);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, allVertices.size()*sizeof(float), allVertices.data(), GL_STATIC_DRAW); // be sure to use glBufferSubData and not glBufferData
     // render quads
-    glDrawArrays(GL_TRIANGLES, 0, allVertices.size() / 4);
+    glDrawArrays(GL_TRIANGLES, 0, toPrint / 4);
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -160,7 +173,7 @@ std::vector<int> Imp::getLineWraps(std::string_view text, float x, float width, 
         if (text[i] == ' ' && i > 2) {
             lineEnd = i;
         }
-        float xPos = x + ch.Bearing.x * scale;
+        float xPos = x + ch.Bearing[0] * scale;
         if (xPos >= width) {
             if (lineEnd == -1) {
                 lineWraps.push_back(i-lineStart);

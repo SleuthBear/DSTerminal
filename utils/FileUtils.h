@@ -7,7 +7,7 @@
 #include <string>
 
 #include "../include/json.h"
-#include "../KeyState.h"
+#include "KeyState.h"
 
 using json = nlohmann::json;
 

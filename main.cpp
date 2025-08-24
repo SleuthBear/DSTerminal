@@ -8,20 +8,26 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <ft2build.h>
 
-#include "CylinderLock.h"
-#include "GameLayer.h"
-#include "Imp.h"
-#include "KeyState.h"
+#include "locks/CylinderLock.h"
+#include "utils/GameLayer.h"
+#include "imp/Imp.h"
+#include "../utils/KeyState.h"
 
 #include FT_FREETYPE_H
-#include "Shader.h"
-#include "Terminal.h"
+#include "utils/Shader.h"
+#include "terminal/Terminal.h"
 #include <unistd.h> // For Unix-like systems
 
+#include "ui/MenuScreen.h"
+#include "ui/TitleScreen.h"
+#include "ui/UI.h"
+#include "utils/SoundManager.h"
+
 // Stuff that needs to be done.
-// TODO nicer wrapping
 // TODO animations for cylinder lock.
-// TODO split command args
+// TODO more flexible sound set up
+// TODO save state
+// TODO menu in game when press escape
 
 GLFWwindow* setup();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -62,17 +68,27 @@ int main()
         exit(1);
     }
 
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    // UI Textures
+    TextureLoader textureLoader;
+    unsigned int tex = textureLoader.loadTexture("../resources/ui/titleScreen.png");
+    TitleScreen::tex = tex;
+    MenuScreen::tex = tex;
+
+    // SoundManager
+    SoundManager *soundManager = new SoundManager();
     // Create shaders
     Shader shader("../shaders/text.vert", "../shaders/text.frag");
     Terminal::shader = &shader;
     Shader lockShader("../shaders/lock.vert", "../shaders/lock.frag");
     CylinderLock::shader = &lockShader;
     Shader impShader("../shaders/imp.vert", "../shaders/imp.frag");
+    UI::shader = &impShader;
     Imp imp = Imp(&SCR_WIDTH, &SCR_HEIGHT);
+    imp.soundManager = soundManager;
     imp.shader = &impShader;
     imp.textShader = &shader;
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
@@ -92,6 +108,14 @@ int main()
         { [&terminal](GLFWwindow *_window, KeyState *_keyState, double _deltaTime){return terminal.update(_window, _keyState, _deltaTime);},
         [&terminal]() {return;} }
     );
+
+    // Create title screen
+    TitleScreen titleScreen = TitleScreen(&SCR_WIDTH, &SCR_HEIGHT);
+    gameStack.push(
+        {[&titleScreen](GLFWwindow *_window, KeyState *_keyState, double _deltaTime){return titleScreen.update(_window, _deltaTime);},
+        [&titleScreen]() {return;}}
+        );
+
     usleep(500);
     // START MAIN LOOP //
     while (!glfwWindowShouldClose(window))
@@ -109,7 +133,7 @@ int main()
         // todo Look into why I need this + make it cleaner
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(lockShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        // TODO look into doing this with unique pointers instead.
+        glUniformMatrix4fv(glGetUniformLocation(impShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         if (gameStack.top().update(window, &keyState, deltaTime)) {
             gameStack.top().cleanup();
             gameStack.pop();
@@ -167,9 +191,9 @@ inline GLFWwindow* setup()
  */
 void processInput(GLFWwindow *window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
+    // if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    //     glfwSetWindowShouldClose(window, true);
+    // }
 }
 
 
@@ -178,9 +202,6 @@ void processInput(GLFWwindow *window)
  */
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    std::cout << "framebuffer callback\n";
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
 

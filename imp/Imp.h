@@ -4,16 +4,17 @@
 
 #ifndef IMP_H
 #define IMP_H
-#include "utils/TextureLoader.h"
+#include "../utils/TextureLoader.h"
 #include <glfw3.h>
 #include <glm/vec2.hpp>
-
-#include "Shader.h"
-#include "utils/TextUtil.h"
+#include "../utils/Shader.h"
+#include "../utils/SoundManager.h"
+#include "../utils/TextUtil.h"
 
 
 class Imp {
 public:
+    SoundManager *soundManager;
     Shader *shader;
     Shader *textShader;
     GLuint atlasTex;
@@ -25,11 +26,13 @@ public:
     unsigned int tex;
     float timeToSpeak = 0;
     glm::vec3 color = RED;
-    std::map<GLchar, Character> characters;
+    Character characters[128];
+    double charsToPrint = 0;
+    double printSpeed = 20;
 
     Imp(int* scrWidth, int* scrHeight);
     void update(GLFWwindow *window, double deltaTime);
-    void renderText(Shader &shader, std::string text, float xInitial, float y, std::vector<int> lineWraps, float width, float lineHeight, float scale, glm::vec3 color);
+    void renderText(Shader &shader, std::string text, float xInitial, float y, std::vector<int> lineWraps, float width, float lineHeight, float scale, vec3 color);
     std::vector<int> getLineWraps(std::string_view text, float x, float width, float scale);
     // x coordinates for rendering the texture
     glm::vec2 frames[5] = {

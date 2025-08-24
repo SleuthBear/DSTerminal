@@ -6,7 +6,7 @@
 #define GAMELAYER_H
 #include <functional>
 #include <glfw3.h>
-#include "KeyState.h"
+#include "../utils/KeyState.h"
 // For now just has an update function. Could have more info later.
 struct GameLayer {
     std::function<int(GLFWwindow*, KeyState*, double)> update;

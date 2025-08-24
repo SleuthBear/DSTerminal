@@ -6,12 +6,12 @@
 #include <freetype/freetype.h>
 #include <STB_IMAGE/stb_image_write.h>
 
-#include "CylinderLock.h"
+#include "../locks/CylinderLock.h"
 #include "../include/STB_IMAGE/stb_image.h"
 #include "STB_IMAGE/stb_image.h"
 
-void scrollCallback(GLFWwindow *window, double xOffset, double yOffset);
-void charCallback(GLFWwindow *window, unsigned int codepoint);
+void terminalScrollCallback(GLFWwindow *window, double xOffset, double yOffset);
+void terminalCharCallback(GLFWwindow *window, unsigned int codepoint);
 Shader* Terminal::shader = nullptr;  // Definition
 
 Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> pushToStack, int *width, int *height) {
@@ -19,14 +19,12 @@ Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> 
     this->height = height;
     this->root = &root;
     this->node = &node;
-    // What do you mean this isn't readable??
     this->pushToStack = pushToStack;
-    // initialize vao and vbo
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     lines[0].text = "";
     lines[1].text = "";
-    lines[1].colour = GREEN;
+    lines[1].colour[0] = 0; lines[1].colour[1] = 0.9f; lines[1].colour[2] = 0;
     lines[1].side = DS_USER;
     end = 0;
     start = 1;
@@ -34,17 +32,20 @@ Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> 
     for (int i = 0; i < MAX_COMMAND_LOOKBACK; i++) {
         commands[i] = {"", GREEN, DS_USER};
     }
-    createBitMap("../resources/ModernDOS.ttf", &atlasTex, characters);
+    createBitMap(std::string("../resources/ModernDOS.ttf").c_str(), &atlasTex, characters);
     input = "";
 }
 
 int Terminal::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
+    termTime += deltaTime;
     if (!active) {
         glfwSetWindowUserPointer(window, this);
-        glfwSetCharCallback(window, charCallback);
-        glfwSetScrollCallback(window, reinterpret_cast<GLFWscrollfun>(scrollCallback));
+        glfwSetCharCallback(window, terminalCharCallback);
+        glfwSetScrollCallback(window, reinterpret_cast<GLFWscrollfun>(terminalScrollCallback));
+        glfwSetMouseButtonCallback(window, nullptr);
         active = true;
     }
+    effects.update(deltaTime);
     processInput(window, keyState, deltaTime);
     renderBuffer(*shader, {5.0f, 5.0f}, (float)*width-15.0f, (float)*height-15.0f);
     imp->update(window, deltaTime);
@@ -52,7 +53,7 @@ int Terminal::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
     return 0;
 }
 
-void Terminal::renderText(Shader &shader, std::string text, float xInitial, float y, std::vector<int> lineWraps, float width, float lineHeight, float scale, glm::vec3 color) {
+void Terminal::renderText(Shader &shader, std::string text, float xInitial, float y, std::vector<int> lineWraps, float width, float lineHeight, float scale, vec3 color) {
     // activate corresponding render state
     shader.use();
     glBindVertexArray(VAO);
@@ -60,8 +61,11 @@ void Terminal::renderText(Shader &shader, std::string text, float xInitial, floa
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
-    glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color.x, color.y, color.z);
-    glActiveTexture(GL_TEXTURE0);
+    if (effects.colorTimer > 0) {
+        glUniform3f(glGetUniformLocation(shader.ID, "textColor"), effects.color.x, effects.color.y, effects.color.z);
+    } else {
+        glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color[0], color[1], color[2]);
+    }
     // iterate through all characters
     float x = xInitial;
     std::string::const_iterator c;
@@ -74,22 +78,24 @@ void Terminal::renderText(Shader &shader, std::string text, float xInitial, floa
         for (int j = 0; j < nChars; ++j) {
             char c = text[at++];
             Character ch = characters[c];
-            float xPos = x + ch.Bearing.x * scale;
-            float yPos = y - (ch.Size.y - ch.Bearing.y) * scale;
+            float xPos = x + ch.Bearing[0] * scale;
+            float yPos = y - (ch.Size[1] - ch.Bearing[1]) * scale;
+            if (effects.shaking>0) {
+                yPos += 0.2*lineHeight*std::sinf(xPos+yPos+termTime*5);
+            }
 
-            float w = ch.Size.x * scale;
-            float h = ch.Size.y * scale;
+            float w = ch.Size[0] * scale;
+            float h = ch.Size[1] * scale;
             // update VBO for each character
             float vertices[] = {
-                 xPos,     yPos + h,   ch.uv.x, ch.uv.z,
-                 xPos,     yPos,       ch.uv.x, ch.uv.w,
-                 xPos + w, yPos,       ch.uv.y, ch.uv.w,
+                 xPos,     yPos + h,   ch.uv[0], ch.uv[2],
+                 xPos,     yPos,       ch.uv[0], ch.uv[3],
+                 xPos + w, yPos,       ch.uv[1], ch.uv[3],
 
-                 xPos,     yPos + h,   ch.uv.x, ch.uv.z,
-                 xPos + w, yPos,       ch.uv.y, ch.uv.w,
-                 xPos + w, yPos + h,   ch.uv.y, ch.uv.z,
+                 xPos,     yPos + h,   ch.uv[0], ch.uv[2],
+                 xPos + w, yPos,       ch.uv[1], ch.uv[3],
+                 xPos + w, yPos + h,   ch.uv[1], ch.uv[2],
             };
-            // todo clean up
             for (float f: vertices) {
                 allVertices.push_back(f);
             }
@@ -122,7 +128,7 @@ std::vector<int> Terminal::getLineWraps(std::string_view text, float x, float wi
         if (text[i] == ' ' && i > 2) {
             lineEnd = i;
         }
-        float xPos = x + ch.Bearing.x * scale;
+        float xPos = x + ch.Bearing[0] * scale;
         if (xPos >= width) {
             if (lineEnd == -1) {
                 lineWraps.push_back(i-lineStart);
@@ -150,8 +156,9 @@ void Terminal::renderBuffer(Shader shader, glm::vec2 pos, float width, float hei
     if (window == -1) return;
     // Subtract line spacing from height to space the bottom line.
     int nLines = ceil((height - LINE_SPACING) / lineHeight) + 1;
+    int cHeight = characters['l'].Size[1]*1.2;
     float charHeight = lineHeight - LINE_SPACING;
-    float charScale = charHeight / (lineHeight*1.5);
+    float charScale = charHeight / (cHeight);
     // We render nLines - 1. Because the last line is the one currently being typed.
     int printedLines = 0;
     // renderText(shader, "> " + input, pos.x, pos.y + (float)(printedLines-1)*lineHeight, width, lineHeight, charScale, GREEN);
@@ -264,7 +271,20 @@ void Terminal::readCommand() {
     }
     if (args[0] == "help") {
         imp->timeToSpeak = 5;
+        imp->charsToPrint = 0;
         imp->text = "Help? Do I look like a butler?!";
+    }
+    if (args[0] == "fuck") {
+        imp->timeToSpeak = 5;
+        imp->charsToPrint = 0;
+        imp->text = "Watch your language you little shit.";
+    }
+    if (args[0] == "shake") {
+        effects.shaking = 5.0f;
+    }
+    if (args[0] == "RED") {
+        effects.colorTimer = 5.0f;
+        effects.color = RED;
     }
 }
 
@@ -385,9 +405,17 @@ void Terminal::processInput(GLFWwindow *window, KeyState* keyState, double delta
             keyState->up = 0;
         }
     }
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        MenuScreen *menu = new MenuScreen(width, height);
+        pushToStack(
+            {[menu](GLFWwindow *_window, KeyState *keystate, double deltaTime){return menu->update(_window, deltaTime);},
+            [menu](){return;}}
+            );
+        active = false;
+    }
 }
 
-void charCallback(GLFWwindow *window, unsigned int codepoint) {
+void terminalCharCallback(GLFWwindow *window, unsigned int codepoint) {
     Terminal *terminal = static_cast<Terminal*>(glfwGetWindowUserPointer(window));
     int start = static_cast<int>(terminal->start);
     int cursor = terminal->cursor;
@@ -397,7 +425,7 @@ void charCallback(GLFWwindow *window, unsigned int codepoint) {
     terminal->cursor++;
 }
 
-void scrollCallback(GLFWwindow *window, double xOffset, double yOffset) {
+void terminalScrollCallback(GLFWwindow *window, double xOffset, double yOffset) {
     Terminal *terminal = static_cast<Terminal*>(glfwGetWindowUserPointer(window));
     float lineHeight = terminal->lineHeight;
     double yPos = terminal->viewHeight;

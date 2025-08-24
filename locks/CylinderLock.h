@@ -4,12 +4,12 @@
 
 #ifndef CYLINDERLOCK_H
 #define CYLINDERLOCK_H
-#include "Shader.h"
+#include "../utils/Shader.h"
 #include <glfw3.h>
 #include <vector>
 
-#include "KeyState.h"
-#include "Terminal.h"
+#include "../utils/KeyState.h"
+#include "../terminal/Terminal.h"
 
 #define MAX_SEGMENTS 64
 #define UNLOCKED 2

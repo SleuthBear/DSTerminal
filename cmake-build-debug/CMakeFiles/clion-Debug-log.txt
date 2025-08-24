@@ -1,14 +1,23 @@
 /Applications/CLion.app/Contents/bin/cmake/mac/aarch64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/Applications/CLion.app/Contents/bin/ninja/mac/aarch64/ninja -G Ninja -S /Users/dylanbeaumont/Desktop/DSTerminal -B /Users/dylanbeaumont/Desktop/DSTerminal/cmake-build-debug
-CMake Warning (dev) at /Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindPackageHandleStandardArgs.cmake:438 (message):
-  The package name passed to `find_package_handle_standard_args` (Freetype)
+CMake Warning (dev) at /Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-4.0/Modules/FindPackageHandleStandardArgs.cmake:430 (message):
+  The package name passed to find_package_handle_standard_args() (Freetype)
   does not match the name of the calling package (freetype).  This can lead
-  to problems in calling code that expects `find_package` result variables
+  to problems in calling code that expects find_package() result variables
   (e.g., `_FOUND`) to follow a certain pattern.
 Call Stack (most recent call first):
-  /Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/Findfreetype.cmake:162 (find_package_handle_standard_args)
+  /Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-4.0/Modules/Findfreetype.cmake:165 (find_package_handle_standard_args)
   CMakeLists.txt:6 (find_package)
 This warning is for project developers.  Use -Wno-dev to suppress it.
 
--- Configuring done (0.0s)
+CMake Deprecation Warning at cmake-build-debug/_deps/cglm-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Configuring done (0.3s)
 -- Generating done (0.0s)
 -- Build files have been written to: /Users/dylanbeaumont/Desktop/DSTerminal/cmake-build-debug
