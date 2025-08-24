@@ -64,7 +64,8 @@
                             "children": [],
                             "file_ref": "concrete_floor_specular_2283909802.jpg"
                         }
-                    ]
+                    ],
+                    "file_ref": "Textures_1992029394"
                 },
                 {
                     "name": "Floor.cpp",
@@ -78,7 +79,8 @@
                     "children": [],
                     "file_ref": "Floor_199463607.h"
                 }
-            ]
+            ],
+            "file_ref": "Terrain_3902258420"
         },
         {
             "name": "Geometry",
@@ -87,7 +89,8 @@
                 {
                     "name": "Textures",
                     "type": 0,
-                    "children": []
+                    "children": [],
+                    "file_ref": "Textures_3038281976"
                 },
                 {
                     "name": "Geometry.cpp",
@@ -125,7 +128,8 @@
                     "children": [],
                     "file_ref": "Geometry_3422095505.h"
                 }
-            ]
+            ],
+            "file_ref": "Geometry_3827354703"
         },
         {
             "name": "Cube.cpp",
@@ -177,7 +181,8 @@
                             "children": [],
                             "file_ref": "front_3272246271.jpg"
                         }
-                    ]
+                    ],
+                    "file_ref": "textures_1826486098"
                 },
                 {
                     "name": "Skybox.h",
@@ -191,7 +196,8 @@
                     "children": [],
                     "file_ref": "Skybox_3000651038.cpp"
                 }
-            ]
+            ],
+            "file_ref": "Skybox_2766209999"
         },
         {
             "name": "Floor.h",
@@ -205,5 +211,6 @@
             "children": [],
             "file_ref": "Geometry_1663324649.h"
         }
-    ]
+    ],
+    "file_ref": "root_3051882669"
 }
