@@ -1,0 +1,15 @@
+[
+  {
+    "file_ref": "root_3051882669",
+    "options": [
+      {"input": "", "response": "Welcome to the Daemon Shell."},
+      {"input": "hello", "response": "Hi, I'm Imp!"}
+    ]
+  },
+  {
+    "file_ref": "Terrain_3902258420",
+    "options": [
+      {"input": "", "response": "This folder contains the terrain textures and rendering info!"}
+    ]
+  }
+]

@@ -37,9 +37,7 @@ inline FileNode* readSystem(const std::string& filePath) {
 inline FileNode* getNode(json data) {
     if (data["name"].empty()) return nullptr;
     FileNode* newNode = new FileNode{data["name"], data["type"], nullptr, nullptr, 0};
-    if (newNode->type == DS_FILE) {
-        newNode->fileRef = data["file_ref"];
-    }
+    newNode->fileRef = data["file_ref"];
     // DO NOT stack allocate this recursively (for obvious reasons)
     int capacity = 4;
     FileNode **children = (FileNode**) malloc(sizeof(FileNode*) * capacity);

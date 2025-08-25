@@ -15,6 +15,7 @@ void terminalCharCallback(GLFWwindow *window, unsigned int codepoint);
 Shader* Terminal::shader = nullptr;  // Definition
 
 Terminal::Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> pushToStack, int *width, int *height) {
+    getDialogue("../dialogue.json");
     this->width = width;
     this->height = height;
     this->root = &root;
@@ -228,6 +229,16 @@ void Terminal::readCommand() {
 
 
     std::string_view text = lines[start].text;
+
+    if (dialogue.contains(node->fileRef)) {
+        for (const Dialogue& option : dialogue[node->fileRef]) {
+            // todo add matching if the text just exists in the string
+            if (option.input == text && text != "") {
+                imp->text = option.response;
+                imp->timeToSpeak = 5;
+            }
+        }
+    }
     std::vector<std::string_view> args;
     int argIdx = text.find_first_not_of(' ');
     while (argIdx != -1) {
@@ -314,16 +325,23 @@ void Terminal::cd(const std::string_view path) {
         addLine({"Invalid path.", RED, DS_SYS});
         return;
     }
-    if (pos->name.find(".lock") != -1) {
-        node = pos;
-        CylinderLock *lock = new CylinderLock{10, 2, 100, this, width, height};
-        pushToStack({
-            [lock](GLFWwindow* _window, KeyState *_keyState, double _deltaTime){return lock->update(_window, _keyState, _deltaTime);},
-                [lock]() {delete lock;}
-        });
-        active = false;
-    }
+    // if (pos->name.find(".lock") != -1) {
+    //     node = pos;
+    //     CylinderLock *lock = new CylinderLock{10, 2, 100, this, width, height};
+    //     pushToStack({
+    //         [lock](GLFWwindow* _window, KeyState *_keyState, double _deltaTime){return lock->update(_window, _keyState, _deltaTime);},
+    //             [lock]() {delete lock;}
+    //     });
+    //     active = false;
+    // }
     node = pos;
+    if (dialogue.contains(node->fileRef)) {
+        std::string_view toSpeak = dialogue[node->fileRef][0].response;
+        if (toSpeak != "") {
+            imp->text = toSpeak;
+            imp->timeToSpeak = 5.0f;
+        }
+    }
 }
 
 void Terminal::cat(const std::string_view path) {
@@ -487,3 +505,15 @@ void Terminal::autoComplete() {
     cursor += completion.length();
 }
 
+void Terminal::getDialogue(std::string path) {
+    std::ifstream f(path);
+    json data = json::parse(f);
+    for (json d : data) {
+        std::cout << d["file_ref"] << std::endl;
+        std::vector<Dialogue> options;
+        for (json option : d["options"]) {
+            options.push_back({option["input"], option["response"]});
+        }
+        dialogue[d["file_ref"]] = options;
+    }
+}

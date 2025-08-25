@@ -7,10 +7,11 @@
 #include "../utils/TextureLoader.h"
 #include <glfw3.h>
 #include <glm/vec2.hpp>
+
+#include "json.h"
 #include "../utils/Shader.h"
 #include "../utils/SoundManager.h"
 #include "../utils/TextUtil.h"
-
 
 class Imp {
 public:

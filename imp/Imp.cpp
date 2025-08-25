@@ -3,12 +3,11 @@
 //
 
 #include "../imp/Imp.h"
-
 #include <glm/gtc/type_ptr.hpp>
 
-
 Imp::Imp(int* scrWidth, int* scrHeight) {
-
+    this->text = "Welcome to the Daemon Shell.";
+    this->timeToSpeak = 5;
     this->scrWidth = scrWidth;
     this->scrHeight = scrHeight;
     TextureLoader texLoader;
@@ -194,4 +193,3 @@ std::vector<int> Imp::getLineWraps(std::string_view text, float x, float width, 
     lineWraps.push_back(i - lineStart);
     return lineWraps;
 }
-

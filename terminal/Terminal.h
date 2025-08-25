@@ -43,10 +43,17 @@ struct Effects {
     }
 };
 
+using json = nlohmann::json;
+
+struct Dialogue {
+    std::string input;
+    std::string response;
+};
 
 class Terminal {
 public:
   Imp *imp;
+  std::map<std::string, std::vector<Dialogue>> dialogue;
   static Shader *shader;
   GLuint atlasTex;
   int* width;
@@ -71,6 +78,7 @@ public:
   Effects effects;
   double termTime = 0.0f;
   Terminal(FileNode root, FileNode node, std::function<void(GameLayer)> pushToStack, int *width, int *height);
+  void getDialogue(std::string path);
   void processInput(GLFWwindow *window, KeyState *keyState, double deltaTime);
   int update(GLFWwindow* window, KeyState *keyState, double deltaTime);
   void renderBuffer(Shader shader, glm::vec2 pos, float width, float height);
