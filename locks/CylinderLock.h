@@ -10,10 +10,9 @@
 
 #include "../utils/KeyState.h"
 #include "../terminal/Terminal.h"
+#include "../utils/CloseStates.h"
 
 #define MAX_SEGMENTS 64
-#define UNLOCKED 2
-#define LOCK_FAILED 3
 struct vertex {
     float x, y, z;
 };

@@ -180,6 +180,14 @@ build CMakeFiles/DSTerminal.dir/ui/TitleScreen.cpp.o: CXX_COMPILER__DSTerminal_u
   OBJECT_DIR = CMakeFiles/DSTerminal.dir
   OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir/ui
 
+build CMakeFiles/DSTerminal.dir/locks/RiddleLock.cpp.o: CXX_COMPILER__DSTerminal_unscanned_Debug /Users/dylanbeaumont/Desktop/DSTerminal/locks/RiddleLock.cpp || cmake_object_order_depends_target_DSTerminal
+  CONFIG = Debug
+  DEP_FILE = CMakeFiles/DSTerminal.dir/locks/RiddleLock.cpp.o.d
+  FLAGS = -g -std=gnu++20 -arch arm64 -fcolor-diagnostics
+  INCLUDES = -I/Users/dylanbeaumont/Desktop/DSTerminal/include -I/opt/homebrew/include/freetype2 -I/Users/dylanbeaumont/Desktop/DSTerminal/include/glad -I/Users/dylanbeaumont/Desktop/DSTerminal/cmake-build-debug/_deps/cglm-src/include -isystem /Users/dylanbeaumont/Desktop/DSTerminal/include/glfw
+  OBJECT_DIR = CMakeFiles/DSTerminal.dir
+  OBJECT_FILE_DIR = CMakeFiles/DSTerminal.dir/locks
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target DSTerminal
@@ -188,7 +196,7 @@ build CMakeFiles/DSTerminal.dir/ui/TitleScreen.cpp.o: CXX_COMPILER__DSTerminal_u
 #############################################
 # Link the executable DSTerminal
 
-build DSTerminal: CXX_EXECUTABLE_LINKER__DSTerminal_Debug CMakeFiles/DSTerminal.dir/main.cpp.o CMakeFiles/DSTerminal.dir/terminal/Terminal.cpp.o CMakeFiles/DSTerminal.dir/locks/CylinderLock.cpp.o CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image.cpp.o CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image_write.cpp.o CMakeFiles/DSTerminal.dir/imp/Imp.cpp.o CMakeFiles/DSTerminal.dir/utils/TextureLoader.cpp.o CMakeFiles/DSTerminal.dir/utils/TextUtil.c.o CMakeFiles/DSTerminal.dir/utils/SoundManager.cpp.o CMakeFiles/DSTerminal.dir/ui/UI.cpp.o CMakeFiles/DSTerminal.dir/ui/MenuScreen.cpp.o CMakeFiles/DSTerminal.dir/ui/TitleScreen.cpp.o | /Users/dylanbeaumont/Desktop/DSTerminal/include/bin/libglfw3.a libGLAD.a /opt/homebrew/lib/libfreetype.dylib _deps/cglm-build/libcglm.0.9.2.dylib || _deps/cglm-build/libcglm.dylib libGLAD.a _deps/cglm-build/libcglm.dylib
+build DSTerminal: CXX_EXECUTABLE_LINKER__DSTerminal_Debug CMakeFiles/DSTerminal.dir/main.cpp.o CMakeFiles/DSTerminal.dir/terminal/Terminal.cpp.o CMakeFiles/DSTerminal.dir/locks/CylinderLock.cpp.o CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image.cpp.o CMakeFiles/DSTerminal.dir/include/STB_IMAGE/stb_image_write.cpp.o CMakeFiles/DSTerminal.dir/imp/Imp.cpp.o CMakeFiles/DSTerminal.dir/utils/TextureLoader.cpp.o CMakeFiles/DSTerminal.dir/utils/TextUtil.c.o CMakeFiles/DSTerminal.dir/utils/SoundManager.cpp.o CMakeFiles/DSTerminal.dir/ui/UI.cpp.o CMakeFiles/DSTerminal.dir/ui/MenuScreen.cpp.o CMakeFiles/DSTerminal.dir/ui/TitleScreen.cpp.o CMakeFiles/DSTerminal.dir/locks/RiddleLock.cpp.o | /Users/dylanbeaumont/Desktop/DSTerminal/include/bin/libglfw3.a libGLAD.a /opt/homebrew/lib/libfreetype.dylib _deps/cglm-build/libcglm.0.9.2.dylib || _deps/cglm-build/libcglm.dylib libGLAD.a _deps/cglm-build/libcglm.dylib
   CONFIG = Debug
   FLAGS = -g -arch arm64
   LINK_LIBRARIES = -Wl,-rpath,/Users/dylanbeaumont/Desktop/DSTerminal/cmake-build-debug/_deps/cglm-build  /Users/dylanbeaumont/Desktop/DSTerminal/include/bin/libglfw3.a  libGLAD.a  /opt/homebrew/lib/libfreetype.dylib  _deps/cglm-build/libcglm.0.9.2.dylib  -framework Cocoa  -framework IOKit  -framework CoreVideo  -framework CoreFoundation

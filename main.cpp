@@ -24,10 +24,9 @@
 #include "utils/SoundManager.h"
 
 // Stuff that needs to be done.
-// TODO animations for cylinder lock.
 // TODO more flexible sound set up
 // TODO save state
-// TODO menu in game when press escape
+// TODO make imp global (pass reference to the terminal IG)
 
 GLFWwindow* setup();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

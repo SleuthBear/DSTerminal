@@ -8,6 +8,8 @@
 
 #include "../locks/CylinderLock.h"
 #include "../include/STB_IMAGE/stb_image.h"
+#include "../locks.h"
+#include "../locks/RiddleLock.h"
 #include "STB_IMAGE/stb_image.h"
 
 void terminalScrollCallback(GLFWwindow *window, double xOffset, double yOffset);
@@ -325,15 +327,23 @@ void Terminal::cd(const std::string_view path) {
         addLine({"Invalid path.", RED, DS_SYS});
         return;
     }
-    // if (pos->name.find(".lock") != -1) {
-    //     node = pos;
-    //     CylinderLock *lock = new CylinderLock{10, 2, 100, this, width, height};
-    //     pushToStack({
-    //         [lock](GLFWwindow* _window, KeyState *_keyState, double _deltaTime){return lock->update(_window, _keyState, _deltaTime);},
-    //             [lock]() {delete lock;}
-    //     });
-    //     active = false;
-    // }
+    if (pos->name.find(".lock") != -1) {
+        //CylinderLock *lock = new CylinderLock{10, 2, 100, this, width, height};
+        if (!LOCKS_OPENED[pos->fileRef]) {
+            LockInfo info = LOCK_MAP[pos->fileRef];
+            RiddleLock *lock = new RiddleLock(pos->fileRef, LOCK_MAP[pos->fileRef], width, height);
+            lock->shader = shader;
+            lock->atlasTex = atlasTex;
+            lock->characters = characters;
+            // todo clean up
+            pushToStack({
+                [lock](GLFWwindow* _window, KeyState *_keyState, double _deltaTime){return lock->update(_window, _keyState, _deltaTime);},
+                    [lock]() {}
+            });
+            active = false;
+        }
+
+    }
     node = pos;
     if (dialogue.contains(node->fileRef)) {
         std::string_view toSpeak = dialogue[node->fileRef][0].response;

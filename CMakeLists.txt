@@ -55,6 +55,10 @@ add_executable(DSTerminal main.cpp
         ui/TitleScreen.cpp
         ui/TitleScreen.h
         include/cglm/cglm.h
+        locks.h
+        locks/RiddleLock.cpp
+        locks/RiddleLock.h
+        utils/CloseStates.h
 )
 
 target_link_libraries(DSTerminal PRIVATE

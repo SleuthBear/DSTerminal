@@ -1,216 +1,76 @@
 {
     "name": "root",
     "type": 0,
+    "file_ref": "root_3051882669",
     "children": [
         {
-            "name": "Geometry.cpp",
+            "name": "Logs.lock",
             "type": 1,
             "children": [],
-            "file_ref": "Geometry_1697775741.cpp"
+            "file_ref": "Logs_1807696380.lock"
         },
         {
-            "name": "Skybox.h",
+            "name": "Code.lock",
             "type": 1,
             "children": [],
-            "file_ref": "Skybox_3457829866.h"
+            "file_ref": "Code_163903526.lock"
         },
         {
-            "name": "Floor.cpp",
-            "type": 1,
-            "children": [],
-            "file_ref": "Floor_4006744451.cpp"
-        },
-        {
-            "name": "Cube.h",
-            "type": 1,
-            "children": [],
-            "file_ref": "Cube_2324324833.h"
-        },
-        {
-            "name": "Skybox.cpp",
-            "type": 1,
-            "children": [],
-            "file_ref": "Skybox_2548221297.cpp"
-        },
-        {
-            "name": "Terminal.cpp",
-            "type": 1,
-            "children": [],
-            "file_ref": "Terminal_2302586381.cpp"
-        },
-        {
-            "name": "Terminal.h",
-            "type": 1,
-            "children": [],
-            "file_ref": "Terminal_1080204960.h"
-        },
-        {
-            "name": "Terrain",
+            "name": "Documents",
             "type": 0,
+            "file_ref": "Documents_4215046222",
             "children": [
                 {
-                    "name": "Textures",
+                    "name": "Career",
                     "type": 0,
+                    "file_ref": "Career_4249592771",
                     "children": [
                         {
-                            "name": "concrete_floor.jpeg",
+                            "name": "Resume.txt",
                             "type": 1,
                             "children": [],
-                            "file_ref": "concrete_floor_3660577358.jpeg"
-                        },
-                        {
-                            "name": "concrete_floor_specular.jpg",
-                            "type": 1,
-                            "children": [],
-                            "file_ref": "concrete_floor_specular_2283909802.jpg"
+                            "file_ref": "Resume_1691585374.txt"
                         }
-                    ],
-                    "file_ref": "Textures_1992029394"
+                    ]
                 },
                 {
-                    "name": "Floor.cpp",
+                    "name": "passwords.txt",
                     "type": 1,
                     "children": [],
-                    "file_ref": "Floor_2570219538.cpp"
+                    "file_ref": "passwords_697237333.txt"
                 },
                 {
-                    "name": "Floor.h",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "Floor_199463607.h"
-                }
-            ],
-            "file_ref": "Terrain_3902258420"
-        },
-        {
-            "name": "Geometry",
-            "type": 0,
-            "children": [
-                {
-                    "name": "Textures",
+                    "name": "Notes",
                     "type": 0,
-                    "children": [],
-                    "file_ref": "Textures_3038281976"
-                },
-                {
-                    "name": "Geometry.cpp",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "Geometry_1348680805.cpp"
-                },
-                {
-                    "name": "Cube.h",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "Cube_2721262384.h"
-                },
-                {
-                    "name": "Terminal.cpp",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "Terminal_1460471055.cpp"
-                },
-                {
-                    "name": "Terminal.h",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "Terminal_328548353.h"
-                },
-                {
-                    "name": "Cube.cpp",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "Cube_250646444.cpp"
-                },
-                {
-                    "name": "Geometry.h",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "Geometry_3422095505.h"
-                }
-            ],
-            "file_ref": "Geometry_3827354703"
-        },
-        {
-            "name": "Cube.cpp",
-            "type": 1,
-            "children": [],
-            "file_ref": "Cube_3653205711.cpp"
-        },
-        {
-            "name": "Skybox",
-            "type": 0,
-            "children": [
-                {
-                    "name": "textures",
-                    "type": 0,
+                    "file_ref": "Notes_3667005404",
                     "children": [
                         {
-                            "name": "bottom.jpg",
+                            "name": "for_emma.txt",
                             "type": 1,
                             "children": [],
-                            "file_ref": "bottom_648690733.jpg"
+                            "file_ref": "for_emma_206555392.txt"
                         },
                         {
-                            "name": "left.jpg",
+                            "name": "groceries.txt",
                             "type": 1,
                             "children": [],
-                            "file_ref": "left_1919458529.jpg"
-                        },
-                        {
-                            "name": "top.jpg",
-                            "type": 1,
-                            "children": [],
-                            "file_ref": "top_3672763941.jpg"
-                        },
-                        {
-                            "name": "back.jpg",
-                            "type": 1,
-                            "children": [],
-                            "file_ref": "back_1680590835.jpg"
-                        },
-                        {
-                            "name": "right.jpg",
-                            "type": 1,
-                            "children": [],
-                            "file_ref": "right_2482787524.jpg"
-                        },
-                        {
-                            "name": "front.jpg",
-                            "type": 1,
-                            "children": [],
-                            "file_ref": "front_3272246271.jpg"
+                            "file_ref": "groceries_2317558115.txt"
                         }
-                    ],
-                    "file_ref": "textures_1826486098"
+                    ]
                 },
                 {
-                    "name": "Skybox.h",
+                    "name": "journals1.txt",
                     "type": 1,
                     "children": [],
-                    "file_ref": "Skybox_4052984597.h"
-                },
-                {
-                    "name": "Skybox.cpp",
-                    "type": 1,
-                    "children": [],
-                    "file_ref": "Skybox_3000651038.cpp"
+                    "file_ref": "journals1_1113276349.txt"
                 }
-            ],
-            "file_ref": "Skybox_2766209999"
+            ]
         },
         {
-            "name": "Floor.h",
+            "name": "Backup.lock",
             "type": 1,
             "children": [],
-            "file_ref": "Floor_2981801643.h"
-        },
-        {
-            "name": "Geometry.h",
-            "type": 1,
-            "children": [],
-            "file_ref": "Geometry_1663324649.h"
+            "file_ref": "Backup_755012715.lock"
         }
-    ],
-    "file_ref": "root_3051882669"
+    ]
 }
