@@ -4,18 +4,24 @@
 
 #include "RiddleLock.h"
 
+#include <thread>
+#include <utility>
+
 void riddleLockCharCallback(GLFWwindow* window, unsigned int codepoint);
 std::map<std::string, bool> LOCKS_OPENED;
-RiddleLock::RiddleLock(std::string fileRef, LockInfo info, int* width, int* height) {
-    this->hint = info.hint;
-    this->answer = info.answer;
-    this->fuzzy = info.fuzzy;
+RiddleLock::RiddleLock(std::string fileRef, const LockConfig& config, int* width, int* height, FileNode **pos) {
+    this->hint = config.hint;
+    this->answer = config.answer;
+    this->fuzzy = config.fuzzy;
+    this->shader = config.shader;
+    this->characters = config.characters;
+    this->atlasTex = config.atlasTex;
     this->scrWidth = width;
     this->scrHeight = height;
-    this->fileRef = fileRef;
+    this->fileRef = std::move(fileRef);
+    this->pos = pos;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-
 }
 
 int RiddleLock::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
@@ -27,6 +33,9 @@ int RiddleLock::update(GLFWwindow *window, KeyState *keyState, double deltaTime)
     }
     //todo center the text properly
     int finished = processInput(window, keyState, deltaTime);
+    if (shouldClose) {
+        return shouldClose;
+    }
     render();
     return finished;
 }
@@ -54,27 +63,21 @@ int RiddleLock::processInput(GLFWwindow* window, KeyState *keyState, double delt
             if (!input.empty()) {
                 if (input == answer) {
                     LOCKS_OPENED[fileRef] = true;
-                    return UNLOCKED;
+                    delayClose(1000);
+                    vec3 green = GREEN;
+                    glm_vec3_copy(green, color);
+                } else {
+                    vec3 red = RED;
+                    vec3 grey = GREY;
+                    glm_vec3_copy(red, color);
+                    delayColorChange(1000, grey);
                 }
-                cursor = 0;
-                input = "";
             }
             keyState->enter = 0;
         }
     }
-    // if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && cursor > 0) {
-    //     if (keyState->left > keyState->interval) {
-    //         cursor--;
-    //         keyState->left = 0;
-    //     }
-    // }
-    // if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && cursor < input.length()) {
-    //     if (keyState->right > keyState->interval) {
-    //         cursor++;
-    //         keyState->right = 0;
-    //     }
-    // }
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        *pos = (*pos)->parent;
         return LOCK_FAILED;
     }
     return 0;
@@ -87,12 +90,12 @@ void RiddleLock::render() {
     float charScale = charHeight / (cHeight);
     float lineHeight = 1.5*charHeight;
     float hintColor[] = {0.5f, 0.5f, 0.5f};
-    float inputColor[] = {0.7f, 0.7f, 0.7f};
     // todo make this a C util instead of this crap
+    // todo Also center text here, cos it will be cool
     std::vector<int> wraps = getLineWraps(hint, 0, *scrWidth*0.4, charScale);
     renderText(*shader, hint, *scrWidth*0.3, *scrHeight*0.6, wraps, *scrWidth*0.4, lineHeight, charScale, hintColor);
     wraps = getLineWraps(input, 0, *scrWidth*0.3, charScale);
-    renderText(*shader, input, *scrWidth*0.3, *scrHeight*0.4, wraps, *scrWidth*0.4, lineHeight, charScale, inputColor);
+    renderText(*shader, input, *scrWidth*0.3, *scrHeight*0.4, wraps, *scrWidth*0.4, lineHeight, charScale, color);
 }
 
 std::vector<int> RiddleLock::getLineWraps(std::string_view text, float x, float width, float scale) {
@@ -183,4 +186,25 @@ void RiddleLock::renderText(Shader &shader, std::string text, float xInitial, fl
     glDrawArrays(GL_TRIANGLES, 0, allVertices.size() / 4);
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void RiddleLock::delayClose(int milliseconds) {
+    std::thread t1([this, milliseconds]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+        this->shouldClose = UNLOCKED;
+    });
+    t1.detach();
+}
+
+void RiddleLock::delayColorChange(int milliseconds, float colorToChange[3]) {
+    float r = colorToChange[0];
+    float g = colorToChange[1];
+    float b = colorToChange[2];
+    std::thread t1([this, milliseconds, r, g, b]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+        this->color[0] = r;
+        this->color[1] = g;
+        this->color[2] = b;
+    });
+    t1.detach();
 }

@@ -15,6 +15,7 @@ extern "C" {
 #define BLUE {0.4, 0.4, 0.9}
 #define RED {0.9, 0.4, 0.4}
 #define WHITE {0.8f, 0.8f, 0.8f}
+#define GREY {0.7f, 0.7f, 0.7f};
 #define LINE_SPACING 5.0f
 
 

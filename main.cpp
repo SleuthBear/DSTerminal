@@ -26,7 +26,6 @@
 // Stuff that needs to be done.
 // TODO more flexible sound set up
 // TODO save state
-// TODO make imp global (pass reference to the terminal IG)
 
 GLFWwindow* setup();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -109,7 +108,7 @@ int main()
     );
 
     // Create title screen
-    TitleScreen titleScreen = TitleScreen(&SCR_WIDTH, &SCR_HEIGHT);
+    TitleScreen titleScreen = TitleScreen(&SCR_WIDTH, &SCR_HEIGHT, &terminal);
     gameStack.push(
         {[&titleScreen](GLFWwindow *_window, KeyState *_keyState, double _deltaTime){return titleScreen.update(_window, _deltaTime);},
         [&titleScreen]() {return;}}
@@ -136,6 +135,9 @@ int main()
         if (gameStack.top().update(window, &keyState, deltaTime)) {
             gameStack.top().cleanup();
             gameStack.pop();
+        }
+        if (imp.active) {
+            imp.update(window, deltaTime);
         }
         glfwSwapBuffers(window);
         glfwPollEvents();

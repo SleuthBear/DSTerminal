@@ -6,8 +6,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 Imp::Imp(int* scrWidth, int* scrHeight) {
-    this->text = "Welcome to the Daemon Shell.";
-    this->timeToSpeak = 5;
+    this->text = "Welcome to the Daemon Shell. I'm Imp, a personal assistant invented by Dr. Hollenfeuer. Type help for more info!";
+    this->timeToSpeak = 15.0f;
     this->scrWidth = scrWidth;
     this->scrHeight = scrHeight;
     TextureLoader texLoader;

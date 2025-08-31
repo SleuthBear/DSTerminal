@@ -15,6 +15,7 @@ struct KeyState{
     double enter = 10;
     double space = 10;
     double tab = 10;
+    double escape = 10;
     double interval = 0.1f;
     void addDeltaTime(double deltaTime) {
         left+=deltaTime;
@@ -24,6 +25,7 @@ struct KeyState{
         enter+=deltaTime;
         space+=deltaTime;
         tab+=deltaTime;
+        escape+=deltaTime;
     }
 };
 

@@ -29,7 +29,8 @@ public:
     glm::vec3 color = RED;
     Character characters[128];
     double charsToPrint = 0;
-    double printSpeed = 20;
+    double printSpeed = 30;
+    bool active = false;
 
     Imp(int* scrWidth, int* scrHeight);
     void update(GLFWwindow *window, double deltaTime);

@@ -88,9 +88,11 @@ public:
   void stepBack();
   void autoComplete();
   void readCommand();
+  void loadGame();
   void ls(const std::string_view path);
   void cd(const std::string_view path);
   void cat(std::string_view path);
+
 };
 
 #endif //TERMINAL_H

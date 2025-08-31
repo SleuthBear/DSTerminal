@@ -46,12 +46,12 @@ int Terminal::update(GLFWwindow *window, KeyState *keyState, double deltaTime) {
         glfwSetCharCallback(window, terminalCharCallback);
         glfwSetScrollCallback(window, reinterpret_cast<GLFWscrollfun>(terminalScrollCallback));
         glfwSetMouseButtonCallback(window, nullptr);
+        imp->active = true;
         active = true;
     }
     effects.update(deltaTime);
     processInput(window, keyState, deltaTime);
     renderBuffer(*shader, {5.0f, 5.0f}, (float)*width-15.0f, (float)*height-15.0f);
-    imp->update(window, deltaTime);
     shader->use();
     return 0;
 }
@@ -237,7 +237,8 @@ void Terminal::readCommand() {
             // todo add matching if the text just exists in the string
             if (option.input == text && text != "") {
                 imp->text = option.response;
-                imp->timeToSpeak = 5;
+                imp->charsToPrint = 0;
+                imp->timeToSpeak = 15;
             }
         }
     }
@@ -282,29 +283,13 @@ void Terminal::readCommand() {
         }
         cat(args[1]);
     }
-    if (args[0] == "help") {
-        imp->timeToSpeak = 5;
-        imp->charsToPrint = 0;
-        imp->text = "Help? Do I look like a butler?!";
-    }
-    if (args[0] == "fuck") {
-        imp->timeToSpeak = 5;
-        imp->charsToPrint = 0;
-        imp->text = "Watch your language you little shit.";
-    }
-    if (args[0] == "shake") {
-        effects.shaking = 5.0f;
-    }
-    if (args[0] == "RED") {
-        effects.colorTimer = 5.0f;
-        effects.color = RED;
-    }
 }
 
 void Terminal::ls(std::string_view path) {
     std::string response;
     // Recurse through the path and try exit out if you fail to get to the end
     FileNode *pos = node;
+    // TODO check locks when following path
     pos = followPath(pos, path);
     if (pos == nullptr) {
         addLine({"Invalid path.", RED, DS_SYS});
@@ -328,28 +313,31 @@ void Terminal::cd(const std::string_view path) {
         return;
     }
     if (pos->name.find(".lock") != -1) {
-        //CylinderLock *lock = new CylinderLock{10, 2, 100, this, width, height};
         if (!LOCKS_OPENED[pos->fileRef]) {
             LockInfo info = LOCK_MAP[pos->fileRef];
-            RiddleLock *lock = new RiddleLock(pos->fileRef, LOCK_MAP[pos->fileRef], width, height);
+            // Creation info for the lock
+            LockConfig config = {
+                info.hint, info.answer, info.fuzzy, shader,
+                characters, atlasTex
+            };
+            RiddleLock *lock = new RiddleLock(pos->fileRef, config, width, height, &node);
             lock->shader = shader;
             lock->atlasTex = atlasTex;
-            lock->characters = characters;
-            // todo clean up
+
             pushToStack({
                 [lock](GLFWwindow* _window, KeyState *_keyState, double _deltaTime){return lock->update(_window, _keyState, _deltaTime);},
                     [lock]() {}
             });
             active = false;
         }
-
     }
     node = pos;
     if (dialogue.contains(node->fileRef)) {
         std::string_view toSpeak = dialogue[node->fileRef][0].response;
-        if (toSpeak != "") {
+        if (!toSpeak.empty()) {
             imp->text = toSpeak;
-            imp->timeToSpeak = 5.0f;
+            imp->charsToPrint = 0;
+            imp->timeToSpeak = 15.0f;
         }
     }
 }
@@ -434,11 +422,12 @@ void Terminal::processInput(GLFWwindow *window, KeyState* keyState, double delta
         }
     }
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        MenuScreen *menu = new MenuScreen(width, height);
+        MenuScreen *menu = new MenuScreen(width, height, node);
         pushToStack(
             {[menu](GLFWwindow *_window, KeyState *keystate, double deltaTime){return menu->update(_window, deltaTime);},
             [menu](){return;}}
             );
+        imp->active = false;
         active = false;
     }
 }
@@ -526,4 +515,25 @@ void Terminal::getDialogue(std::string path) {
         }
         dialogue[d["file_ref"]] = options;
     }
+}
+
+void Terminal::loadGame() {
+    std::ifstream file;
+    file.open("../saves/locks.txt");
+    std::string locks;
+    std::getline(file, locks);
+    int pos = 0;
+    for (int i = 0; i < locks.length(); i++) {
+        if (locks[i] == ' ') {
+            LOCKS_OPENED[locks.substr(pos, i-pos)] = true;
+            pos = i+1;
+        }
+    }
+    file.close();
+    // todo error handling
+    file.open("../saves/path.txt");
+    std::string path;
+    std::getline(file, path);
+    file.close();
+    cd(path);
 }
